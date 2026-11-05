@@ -37,4 +37,35 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public function business()
+    {
+        return $this->hasOne(Business::class);
+    }
+
+    public function routeNotificationForMail($notification = null): string
+    {
+        return $this->email;
+    }
+
+    public function notifications()
+    {
+        return $this->hasMany(AdminNotification::class);
+    }
+
+    public function notificationCenterItems()
+    {
+        $items = $this->notifications();
+        $business = $this->business;
+
+        if ($business && ! $business->dashboard_notifications) {
+            return $items->whereRaw('1 = 0');
+        }
+
+        if ($business && ! $business->contact_message_alerts) {
+            $items->whereNull('contact_message_id');
+        }
+
+        return $items;
+    }
 }

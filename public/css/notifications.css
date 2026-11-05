@@ -1,0 +1,8 @@
+.notification-popover .notification-popup-row { align-items: center; gap: 9px; grid-template-columns: 24px minmax(0, 1fr) 66px; min-height: 54px; padding: 8px 2px; }
+.notification-popover .notification-popup-icon { background-color: var(--ink); color: var(--ink); height: 18px; margin: 0; width: 18px; }
+.notification-popup-meta { align-items: end; align-self: stretch; display: flex; flex-direction: column; gap: 7px; justify-content: space-between; min-width: 0; }
+.notification-popover .notification-unread-dot { flex-shrink: 0; height: 7px; position: static; width: 7px; }
+.notification-popover .notification-popup-time { font-size: 9px; grid-column: auto; margin-top: auto; text-align: right; white-space: normal; }
+.notification-popover .notification-popup-copy strong { color: var(--ink); font-size: 10.5px; line-height: 1.35; }
+.notification-popover .notification-popup-copy p { font-size: 9.5px; margin-top: 4px; }
+@media (max-width: 360px) { .notification-popover .notification-popup-row { gap: 7px; grid-template-columns: 20px minmax(0, 1fr) 53px; } }

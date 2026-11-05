@@ -1,0 +1,25 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class CreatePasswordResetCodesTable extends Migration
+{
+    public function up()
+    {
+        Schema::create('password_reset_codes', function (Blueprint $table) {
+            $table->string('email')->primary();
+            $table->uuid('challenge_id')->unique();
+            $table->string('code_hash');
+            $table->unsignedTinyInteger('attempts')->default(0);
+            $table->dateTime('expires_at');
+            $table->dateTime('sent_at');
+        });
+    }
+
+    public function down()
+    {
+        Schema::dropIfExists('password_reset_codes');
+    }
+}

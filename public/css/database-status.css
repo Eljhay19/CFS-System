@@ -1,0 +1,14 @@
+* { box-sizing: border-box; }
+body { background: #f1f4f8; color: #07183a; display: flex; flex-direction: column; font: 14px/1.5 Arial, sans-serif; margin: 0; min-height: 100dvh; }
+header { background: #fff; border-bottom: 1px solid #d8e1ee; padding: 12px max(20px, calc((100% - 1200px) / 2)); }
+header a { align-items: center; color: inherit; display: inline-flex; gap: 10px; text-decoration: none; }
+.brand-emblem { height: 34px; width: 55px; }
+header strong { font-size: 28px; }
+main { align-items: center; display: flex; flex: 1; justify-content: center; padding: 24px 16px; }
+section { background: #fff; border: 1px solid #d8e1ee; border-radius: 8px; max-width: 380px; padding: 24px; width: 100%; }
+h1 { font-size: 23px; line-height: 1.25; margin: 0 0 12px; overflow-wrap: anywhere; }
+p { color: #536f9a; margin: 0 0 18px; }
+.retry-button { align-items: center; background: #e77b00; border-radius: 6px; color: #fff; display: inline-flex; font-size: 12px; font-weight: 700; height: 30px; justify-content: center; text-decoration: none; transition: background-color .2s ease; width: 104px; }
+.retry-button:hover { background: #000; }
+.retry-button:focus-visible { outline: 2px solid #045eb7; outline-offset: 3px; }
+footer { background: #0b2845; color: #fff; padding: 18px; text-align: center; }

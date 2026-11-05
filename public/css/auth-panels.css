@@ -1,0 +1,28 @@
+body.login-screen { --auth-width: 332px; --auth-height: 352px; }
+body.login-screen:not(.recovery-screen),
+.recovery-screen .recovery-request,
+.recovery-screen .recovery-sent,
+.recovery-screen .recovery-reset { --auth-height: 320px; }
+.login-screen .login-panel.auth-card {
+    height: var(--auth-height);
+    max-height: calc(100dvh - 24px);
+    max-width: calc(100vw - 24px);
+    overflow-y: auto;
+    width: var(--auth-width);
+}
+.login-screen .auth-card .login-grid { grid-template-columns: 88px minmax(0, 1fr); min-height: 100%; }
+.login-screen .auth-card .login-splash { display: flex; min-height: 100%; }
+.login-screen .auth-card .login-brand { font-size: 15px; gap: 3px; letter-spacing: 0; }
+.login-screen .auth-card .login-brand .brand-emblem { flex: 0 0 32px; height: 20px; width: 32px; }
+.login-screen .auth-card .login-form { min-height: var(--auth-height); min-width: 0; padding: 20px 16px; }
+.login-screen .auth-card .input-shell { flex: 0 0 190px; height: 32px; max-width: 100%; width: 190px; }
+.login-screen .auth-card .login-actions { gap: 6px; }
+.login-screen .auth-card .login-actions .button { flex: 1; font-size: 11px; min-width: 0; padding-inline: 5px; white-space: nowrap; }
+@media (max-width: 380px) {
+    .login-screen .auth-card .login-grid { grid-template-columns: 72px minmax(0, 1fr); }
+    .login-screen .auth-card .login-splash { padding-inline: 9px; }
+    .login-screen .auth-card .login-brand { font-size: 14px; gap: 2px; }
+    .login-screen .auth-card .login-brand .brand-emblem { flex-basis: 28px; width: 28px; }
+    .login-screen .auth-card .login-form { padding-inline: 12px; }
+    .login-screen .auth-card .login-form h1 { font-size: 20px; }
+}

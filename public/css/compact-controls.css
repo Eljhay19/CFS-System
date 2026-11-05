@@ -1,0 +1,30 @@
+:root {
+    --compact-control-height: 30px;
+    --compact-control-font-size: 11px;
+}
+
+.button.compact-button,
+.compact-button {
+    align-items: center;
+    border-radius: 5px;
+    box-shadow: none;
+    display: inline-flex;
+    font-size: var(--compact-control-font-size);
+    font-weight: 600;
+    gap: 6px;
+    height: var(--compact-control-height);
+    justify-content: center;
+    line-height: 1.2;
+    min-height: var(--compact-control-height);
+    min-width: 0;
+    padding: 0 10px;
+    transition: background-color .2s ease, border-color .2s ease, color .2s ease;
+    white-space: nowrap;
+    width: 120px;
+}
+
+.compact-button .ui-icon { height: 14px; width: 14px; }
+.dashboard-export.compact-button { gap: 4px; padding-inline: 8px; width: 128px; }
+.filter-apply.compact-button, .filter-clear.compact-button { width: 64px; }
+button:focus-visible, .button:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px solid #244f84; outline-offset: 2px; }
+.final-thumb-choice input:focus-visible + .final-thumb-icon, .terms-agree input:focus-visible + span { outline: 2px solid #244f84; outline-offset: 3px; }

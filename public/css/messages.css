@@ -1,0 +1,34 @@
+.messages-panel { padding: 12px 16px; }
+.messages-panel header { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; margin-bottom: 20px; }
+.messages-panel h1 { font-size: 28px; margin: 0; }
+.message-list-row { border-bottom: 1px solid var(--line); color: var(--ink); display: grid; font-size: 12px; gap: 12px; grid-template-columns: minmax(160px, 1fr) 2fr auto; padding: 14px 0; }
+.message-list-row span { color: var(--muted); display: block; margin-top: 5px; overflow-wrap: anywhere; }
+.message-list-row p { margin: 0; overflow-wrap: anywhere; }
+.message-metadata { display: grid; font-size: 12px; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.message-metadata dt { color: var(--muted); margin-bottom: 5px; }
+.message-metadata dd { margin: 0; overflow-wrap: anywhere; }
+.message-body { border-block: 1px solid var(--line); font-size: 14px; line-height: 1.7; margin: 24px 0; overflow-wrap: anywhere; padding: 20px 0; white-space: pre-wrap; }
+.message-pagination { display: flex; font-size: 12px; gap: 16px; margin-top: 18px; }
+.contact-replies { border-top: 1px solid var(--line); margin-top: 24px; padding-top: 18px; }
+.contact-replies h2 { font-size: 19px; margin: 0 0 6px; }
+.contact-replies h3 { font-size: 15px; margin: 20px 0 8px; }
+.contact-replies > .muted { color: var(--muted); font-size: 12px; margin: 0 0 14px; }
+.contact-reply-form { display: grid; gap: 8px; max-width: 620px; }
+.contact-reply-form label { font-size: 12px; font-weight: 700; }
+.contact-reply-form textarea { border: 1px solid #bccbe0; border-radius: 5px; color: var(--ink); font: inherit; font-size: 13px; min-height: 110px; padding: 10px; resize: vertical; width: 100%; }
+.contact-reply-form textarea:focus { border-color: #244f84; outline: 2px solid rgba(36,79,132,.12); }
+.contact-reply-form .button { background: var(--orange); border: 0; border-radius: 5px; color: #fff; cursor: pointer; justify-self: end; min-height: 32px; padding: 6px 12px; }
+.contact-reply-form .button:hover { background: #000; }
+.contact-reply-status, .contact-reply-error { display: block; font-size: 12px; margin: 8px 0; }
+.contact-reply-status { color: #087443; }
+.contact-reply-error { color: #b42318; }
+.contact-reply-history { max-width: 760px; }
+.contact-reply-entry { border-top: 1px solid var(--line); padding: 12px 0; }
+.contact-reply-entry header { align-items: center; display: flex; flex-wrap: wrap; font-size: 12px; gap: 10px; justify-content: space-between; }
+.contact-reply-entry header span, .contact-reply-entry > small { color: var(--muted); font-size: 11px; }
+.contact-reply-entry > p { font-size: 13px; line-height: 1.6; margin: 8px 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.contact-reply-entry > small { display: block; margin-top: 5px; }
+.contact-reply-retry { margin-top: 8px; }
+.contact-reply-retry .button { background: #fff; border: 1px solid #9eafc8; border-radius: 5px; color: var(--ink); cursor: pointer; min-height: 30px; padding: 5px 10px; }
+.contact-reply-retry .button:hover { background: #000; border-color: #000; color: #fff; }
+@media (max-width: 640px) { .messages-panel { padding: 8px 2px; } .message-list-row, .message-metadata { grid-template-columns: 1fr; } }

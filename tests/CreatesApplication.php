@@ -17,6 +17,10 @@ trait CreatesApplication
 
         $app->make(Kernel::class)->bootstrap();
 
+        if (config('database.default') !== 'sqlite' || config('database.connections.sqlite.database') !== ':memory:') {
+            throw new \RuntimeException('Tests require in-memory SQLite. Clear cached configuration before running tests.');
+        }
+
         return $app;
     }
 }

@@ -1,0 +1,49 @@
+body.home-terms-screen {
+    overflow: hidden;
+}
+
+.home-terms-dialog {
+    background: transparent;
+    border: 0;
+    border-radius: 18px;
+    max-height: calc(100dvh - 32px);
+    max-width: none;
+    overflow: auto;
+    padding: 0;
+    width: min(580px, calc(100% - 34px));
+}
+
+.home-terms-dialog::backdrop {
+    background: rgba(7, 24, 58, .36);
+}
+
+.home-terms-dialog[open] {
+    animation: homeTermsIn .16s ease-out;
+}
+
+.home-terms-dialog .terms-card {
+    background: #fff;
+    width: 100%;
+}
+
+@keyframes homeTermsIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@media (max-width: 760px) {
+    .home-terms-dialog {
+        width: min(500px, calc(100% - 34px));
+    }
+}
+
+@media (max-width: 640px) {
+    .home-terms-dialog {
+        max-height: calc(100dvh - 24px);
+        width: calc(100% - 22px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .home-terms-dialog[open] { animation: none; }
+}

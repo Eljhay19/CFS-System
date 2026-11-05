@@ -1,0 +1,55 @@
+.business-profile-fields {
+    border: 0;
+    margin: 0;
+    min-width: 0;
+    padding: 0;
+}
+.business-profile-grid .business-fields-grid { gap: 14px 24px; grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 620px; }
+.business-profile-grid .business-logo-field { max-width: 280px; }
+.business-profile-grid .business-logo-upload {
+    background-color: #fbfdff;
+    background-image: radial-gradient(rgba(57, 94, 151, .13) .8px, transparent .8px);
+    background-position: center;
+    background-size: 16px 16px;
+    height: 185px;
+}
+.business-profile-grid .business-logo-preview { align-items: center; display: flex; height: 100%; justify-content: center; min-height: 0; padding: 8px; }
+.business-profile-grid .business-logo-preview svg { color: #526b94; height: 38px; width: 44px; }
+.business-profile-grid .business-logo-preview img { background: #fff; border-radius: 4px; display: block; height: auto; max-height: 100%; max-width: 100%; object-fit: contain; width: auto; }
+.business-logo-empty { align-items: center; color: #607394; display: grid; gap: 5px; justify-items: center; padding: 8px; text-align: center; }
+.business-logo-empty strong { color: var(--ink); font-size: 12px; font-weight: 750; line-height: 1.25; }
+.business-logo-empty em { font-size: 10px; font-style: normal; line-height: 1.25; }
+button.business-logo-choose {
+    justify-self: start;
+    margin-top: 9px;
+    width: 136px;
+}
+.business-profile-fields:disabled button.business-logo-choose { cursor: not-allowed; opacity: .6; }
+.business-profile-grid .business-input-shell { border-radius: 5px; gap: 8px; min-height: 34px; padding: 0 10px; }
+.business-profile-grid .business-input-shell input, .business-profile-grid .business-input-shell select { font-size: 12px; height: 32px; }
+.business-profile-grid .business-input-shell > svg { height: 17px; width: 17px; }
+.business-profile-grid .business-textarea-shell { min-height: 56px; padding: 8px 10px; }
+.business-profile-grid .business-textarea-shell textarea { font-size: 12px; min-height: 38px; }
+
+.business-profile-fields:disabled input,
+.business-profile-fields:disabled select,
+.business-profile-fields:disabled textarea {
+    color: var(--ink);
+    opacity: 1;
+    -webkit-text-fill-color: var(--ink);
+}
+
+.business-profile-fields:disabled .business-logo-upload {
+    cursor: default;
+}
+.business-profile-panel {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 12px 16px 8px;
+}
+.business-profile-actions { align-items: center; display: flex; gap: 9px; justify-content: flex-end; margin-top: 18px; }
+.business-profile-actions .button { min-width: 112px; }
+
+@media (max-width: 640px) { .business-profile-panel { padding: 6px 2px; } .business-profile-grid .business-fields-grid { grid-template-columns: 1fr; } .business-profile-grid .business-logo-field { max-width: none; } }

@@ -1,0 +1,33 @@
+.workflow-filter {
+    align-items: end;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    display: grid;
+    gap: 10px;
+    grid-template-columns: minmax(120px, 160px) repeat(2, minmax(120px, 145px)) minmax(110px, 145px) minmax(80px, 95px) 64px 64px;
+    justify-content: start;
+    margin: 0;
+    padding: 12px;
+}
+.workflow-filter label { color: var(--ink); font-size: 11px; font-weight: 600; margin: 0; min-width: 0; }
+.workflow-filter input, .workflow-filter select {
+    border-radius: 5px;
+    color: var(--ink);
+    font-size: var(--compact-control-font-size);
+    height: var(--compact-control-height);
+    max-width: none;
+    min-height: var(--compact-control-height);
+    min-width: 0;
+    padding: 4px 8px;
+    width: 100%;
+}
+.filter-preset-shell { align-items: center; border: 1px solid var(--line); border-radius: 5px; display: flex; gap: 6px; height: var(--compact-control-height); padding-left: 8px; }
+.filter-preset-shell .ui-icon { flex: 0 0 14px; height: 14px; width: 14px; }
+.workflow-filter .filter-preset-shell select { border: 0; height: calc(var(--compact-control-height) - 2px); min-height: 0; padding-left: 0; }
+.workflow-filter .filter-apply { background: var(--orange); box-shadow: none; }
+.workflow-filter .filter-apply:hover { background: #000; }
+.filter-clear { border: 1px solid var(--line); color: var(--ink); text-decoration: none; transition: border-color .2s ease, background-color .2s ease; }
+.filter-clear:hover { background: #000; border-color: #000; color: #fff; }
+.filter-actions { display: contents; }
+@media (max-width: 1200px) { .workflow-filter { grid-template-columns: repeat(3, minmax(0, 160px)); } }
+@media (max-width: 640px) { .workflow-filter { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 12px; } .workflow-filter label:first-of-type { grid-column: 1 / -1; } .workflow-filter label { flex: none; } }
