@@ -68,6 +68,104 @@
 .top-search button:focus-visible { outline: 2px solid #045eb7; outline-offset: 1px; }
 .has-additional-steps .survey-step strong { overflow-wrap: anywhere; }
 
+/* Added survey steps use the same card footprint as the standard rating steps.
+   Long question sets scroll inside the card so the rating scale and actions stay aligned. */
+.additional-survey-shell {
+    gap: 14px;
+    grid-template-columns: 188px minmax(0, 440px);
+    width: min(642px, 100%);
+}
+.survey-card.additional-survey-card {
+    box-sizing: border-box;
+    height: auto;
+    max-width: 440px;
+    max-height: 455px;
+    min-height: 270px;
+    width: min(440px, 100%);
+}
+.additional-survey-card .survey-content {
+    align-content: stretch;
+    box-sizing: border-box;
+    gap: 0;
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+    height: auto;
+    min-height: 0;
+    overflow: hidden;
+    padding: 16px 24px 12px;
+}
+.additional-survey-card .survey-pill { margin-bottom: 8px; }
+.additional-survey-card .survey-title-row { align-items: flex-start; min-width: 0; }
+.additional-survey-card .survey-title-row h1 {
+    line-height: 1.15;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    white-space: normal;
+}
+.additional-survey-card .survey-lead {
+    line-height: 1.42;
+    margin-bottom: 8px;
+    max-width: 405px;
+    overflow-wrap: anywhere;
+}
+.additional-survey-card .survey-form {
+    gap: 8px;
+    grid-template-rows: minmax(0, 1fr) auto;
+    min-height: 0;
+    overflow: hidden;
+}
+.additional-survey-card .final-question-list,
+.additional-survey-card .service-rating-list {
+    align-content: start;
+    min-height: 0;
+    min-width: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-width: none;
+    padding-right: 0;
+}
+.additional-survey-card .final-question-list::-webkit-scrollbar,
+.additional-survey-card .service-rating-list::-webkit-scrollbar { display: none; }
+.additional-survey-card .service-rating-row {
+    gap: 8px;
+    grid-template-columns: 39px minmax(0, 1fr);
+    padding: 2px 0 3px;
+}
+.additional-survey-card .service-rating-icon { height: 20px; stroke-width: 1.7; width: 20px; }
+.additional-survey-card .service-rating-main,
+.additional-survey-card .slider-heading,
+.additional-survey-card .slider-heading > div,
+.additional-survey-card .smooth-range { min-width: 0; width: 100%; }
+.additional-survey-card .service-rating-main { gap: 1px; }
+.additional-survey-card .slider-heading { gap: 8px; }
+.additional-survey-card .slider-heading label {
+    color: var(--ink);
+    display: block;
+    font-size: 9.2px;
+    font-weight: 700;
+    line-height: 1.08;
+    margin: 0;
+}
+.additional-survey-card .slider-value { font-size: 12px; }
+.additional-survey-card .smooth-range { height: 10px; }
+.food-rating-list .smooth-range {
+    margin-inline: 5px;
+    width: calc(100% - 10px);
+}
+.additional-survey-card .service-rating-list .range-scale { font-size: 8.8px; line-height: 1.1; }
+.additional-survey-card .survey-actions {
+    align-items: center;
+    flex: 0 0 auto;
+    margin-top: 8px;
+    min-height: 34px;
+}
+.additional-survey-card .survey-button {
+    flex: 0 0 120px;
+    min-width: 120px;
+    white-space: nowrap;
+    width: 120px;
+}
+
 /* Feedback table: compact, readable and responsive without changing dashboard charts. */
 .feedback-dashboard .feedback-table-head {
     align-items: center;

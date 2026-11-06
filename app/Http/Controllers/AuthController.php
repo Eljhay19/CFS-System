@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -23,6 +24,7 @@ class AuthController extends Controller
 
         if (Auth::attempt([$field => $data['login'], 'password' => $data['password']])) {
             $request->session()->regenerate();
+            $this->persistLegacyBusinessLogo($request->user());
 
             return redirect()->intended(route('dashboard'));
         }
@@ -40,5 +42,29 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('login');
+    }
+
+    private function persistLegacyBusinessLogo($user): void
+    {
+        $business = $user->business;
+        if (! $business || $business->logo_data || ! $business->logo) return;
+
+        $relativePath = $business->logo;
+        if (! preg_match('#\Auploads/logos/[A-Za-z0-9._-]+\.(?:jpg|jpeg|png)\z#iD', $relativePath)) return;
+
+        $path = public_path($relativePath);
+        if (! is_file($path) || ! is_readable($path)) return;
+
+        try {
+            $mime = mime_content_type($path);
+            if (! in_array($mime, ['image/jpeg', 'image/png'], true)) return;
+
+            $business->forceFill([
+                'logo_data' => file_get_contents($path),
+                'logo_mime' => $mime,
+            ])->save();
+        } catch (\Throwable $exception) {
+            Log::warning('Could not preserve the existing business profile image.', ['user_id' => $user->id]);
+        }
     }
 }

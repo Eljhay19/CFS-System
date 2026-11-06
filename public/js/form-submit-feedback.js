@@ -24,7 +24,7 @@
         if (!(form instanceof HTMLFormElement) || form.dataset.submitting === '1') return;
         // These workflows own their own validation and pending state. Running a
         // second handler here can overwrite their label or remove button icons.
-        if (form.matches('[data-contact-form], .survey-form, [data-password-form], [data-detail-form], [data-admin-action-form]')) return;
+        if (form.matches('[data-contact-form], .survey-form, [data-password-form], [data-detail-form], [data-admin-action-form], [data-question-delete-form]')) return;
 
         const submitter = event.submitter || form.querySelector('button[type="submit"], input[type="submit"]');
         if (!submitter) return;

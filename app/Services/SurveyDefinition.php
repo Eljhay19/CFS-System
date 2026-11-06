@@ -145,10 +145,63 @@ class SurveyDefinition
         return $rules;
     }
 
+    public function coreRules(string $step): array
+    {
+        $rules = [];
+
+        foreach ($this->questions($step) as $question) {
+            if (! $question['core']) continue;
+
+            $id = $question['id'];
+            $field = 'core.' . $id;
+            $required = (bool) $question['required'];
+
+            if ($question['type'] === 'rating') {
+                $isStaffNotApplicable = $question['key'] === 'staff' && request()->boolean('staff_na');
+                if ($question['key'] === 'staff') {
+                    $rules['staff_na'] = ['nullable', 'boolean'];
+                }
+                $rules[$field] = $isStaffNotApplicable
+                    ? ['nullable']
+                    : array_merge([$required ? 'required' : 'nullable'], ['integer', 'between:1,10']);
+                $rules['core_selected.' . $id] = $isStaffNotApplicable || ! $required
+                    ? ['nullable']
+                    : ['accepted'];
+                continue;
+            }
+
+            if ($question['type'] === 'multiple_choice') {
+                $rules[$field] = array_merge([$required ? 'required' : 'nullable'], [Rule::in($question['options'])]);
+                continue;
+            }
+
+            if ($question['key'] === 'date_of_visit') {
+                $rules[$field] = [$required ? 'required' : 'nullable', 'date_format:Y-m-d', 'before_or_equal:today'];
+            } elseif ($question['key'] === 'time_of_order') {
+                $rules[$field] = [$required ? 'required' : 'nullable', 'date_format:H:i'];
+            } elseif ($question['key'] === 'problem_comment') {
+                $problemQuestion = collect(session('survey.questions', []))->first(fn ($candidate) => $candidate['core'] && $candidate['key'] === 'problem_today');
+                $problemAnswer = $problemQuestion
+                    ? request()->input('core.' . $problemQuestion['id'], session('survey.core.' . $problemQuestion['id']))
+                    : null;
+                $rules[$field] = [Rule::requiredIf($problemAnswer === 'Yes'), 'nullable', 'string', 'max:1000'];
+            } else {
+                $rules[$field] = array_merge([$required ? 'required' : 'nullable'], ['string', 'max:1000']);
+            }
+        }
+
+        return $rules;
+    }
+
     public function value(array $question, array $survey)
     {
+        if ($question['core'] && array_key_exists($question['id'], $survey['core'] ?? [])) {
+            return $survey['core'][$question['id']];
+        }
+
         $sections = ['visit' => 'visit', 'order' => 'order', 'service' => 'store_rating', 'food' => 'food_rating', 'final' => 'final'];
-        return $question['core'] ? ($survey[$sections[$question['step']]][$question['key']] ?? '')
+        $section = $sections[$question['step']] ?? null;
+        return $question['core'] ? ($section ? ($survey[$section][$question['key']] ?? $survey[$section]['food_ratings'][$question['key']] ?? '') : '')
             : ($survey['extras'][$question['step']][$question['id']] ?? '');
     }
 }

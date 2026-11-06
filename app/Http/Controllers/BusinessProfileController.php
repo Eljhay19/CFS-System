@@ -29,19 +29,13 @@ class BusinessProfileController extends Controller
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
             'description' => ['nullable', 'string', 'max:1000'],
         ]);
-        unset($data['logo']);
+        unset($data['logo'], $data['logo_data'], $data['logo_mime']);
 
         if ($request->hasFile('logo')) {
             $file = $request->file('logo');
-            $name = 'business-logo-' . $request->user()->id . '-' . \Illuminate\Support\Str::uuid() . '.' . $file->guessExtension();
-            $logoDirectory = public_path('uploads/logos');
-
-            if (! is_dir($logoDirectory)) {
-                mkdir($logoDirectory, 0755, true);
-            }
-
-            $file->move($logoDirectory, $name);
-            $data['logo'] = 'uploads/logos/' . $name;
+            $data['logo'] = null;
+            $data['logo_data'] = $file->getContent();
+            $data['logo_mime'] = $file->getMimeType();
         }
 
         $existing = $request->user()->business;
@@ -59,5 +53,17 @@ class BusinessProfileController extends Controller
         return redirect()
             ->route('business.edit')
             ->with('status', 'Business information saved successfully.');
+    }
+
+    public function logo(Request $request)
+    {
+        $business = $request->user()->business;
+        abort_unless($business && $business->logo_data && in_array($business->logo_mime, ['image/jpeg', 'image/png'], true), 404);
+
+        return response($business->logo_data, 200, [
+            'Content-Type' => $business->logo_mime,
+            'Cache-Control' => 'private, max-age=3600',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 }

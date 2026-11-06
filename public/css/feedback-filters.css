@@ -22,8 +22,12 @@
     width: 100%;
 }
 .filter-preset-shell { align-items: center; border: 1px solid var(--line); border-radius: 5px; display: flex; gap: 6px; height: var(--compact-control-height); padding-left: 8px; }
+.filter-preset-shell:hover, .filter-preset-shell:focus-within { border-color: var(--line); box-shadow: none; }
 .filter-preset-shell .ui-icon { flex: 0 0 14px; height: 14px; width: 14px; }
 .workflow-filter .filter-preset-shell select { border: 0; height: calc(var(--compact-control-height) - 2px); min-height: 0; padding-left: 0; }
+.workflow-filter .filter-preset-shell select:hover,
+.workflow-filter .filter-preset-shell select:focus,
+.workflow-filter .filter-preset-shell select:focus-visible { border: 0; box-shadow: none; outline: 0; }
 .workflow-filter .filter-apply { background: var(--orange); box-shadow: none; }
 .workflow-filter .filter-apply:hover { background: #000; }
 .filter-clear { border: 1px solid var(--line); color: var(--ink); text-decoration: none; transition: border-color .2s ease, background-color .2s ease; }

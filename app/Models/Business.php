@@ -19,6 +19,8 @@ class Business extends Model
         'contact_number',
         'email',
         'logo',
+        'logo_data',
+        'logo_mime',
         'description',
         'notification_email', 'survey_slug', 'survey_enabled', 'is_default',
         'dashboard_notifications', 'feedback_email_alerts', 'contact_message_alerts', 'closed_survey_message',

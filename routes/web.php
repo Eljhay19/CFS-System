@@ -62,9 +62,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/settings/notification-email/verify', [SettingsController::class, 'verifyNotificationEmail'])->middleware('throttle:6,1')->name('settings.notification-email.verify');
     Route::post('/settings/account-email/verify', [SettingsController::class, 'verifyAccountEmail'])->middleware('throttle:6,1')->name('settings.account-email.verify');
     Route::get('/business-profile', [BusinessProfileController::class, 'edit'])->name('business.edit');
+    Route::get('/business-profile/logo', [BusinessProfileController::class, 'logo'])->name('business.logo');
     Route::post('/business-profile', [BusinessProfileController::class, 'update'])->name('business.update');
     Route::resource('/questions', QuestionController::class)->except(['show']);
     Route::post('/questions/{question}/restore', [QuestionController::class, 'restore'])->name('questions.restore');
+    Route::delete('/questions/{question}/permanently', [QuestionController::class, 'destroyPermanently'])->name('questions.permanently-destroy');
     Route::post('/survey-steps', [SurveyStepController::class, 'store'])->name('survey-steps.store');
     Route::put('/survey-steps/{surveyStep}', [SurveyStepController::class, 'update'])->name('survey-steps.update');
     Route::post('/survey-steps/{surveyStep}/publish', [SurveyStepController::class, 'publish'])->name('survey-steps.publish');

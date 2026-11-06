@@ -6,13 +6,14 @@
         $actions = ['visit' => 'feedback.visit', 'order' => 'feedback.order.save', 'service' => 'feedback.store-rating.save', 'food' => 'feedback.food-rating.save', 'final' => 'feedback.final.save'];
         $backs = ['order' => 'feedback.show', 'service' => 'feedback.order', 'food' => 'feedback.store-rating', 'final' => 'feedback.food-rating'];
         $hasExtra = collect($questions)->contains(fn ($question) => ! $question['core']);
+        $hasRatings = collect($questions)->contains(fn ($question) => $question['type'] === 'rating');
         $custom = ! isset(\App\Services\SurveyDefinition::STEPS[$step]);
         $title = $titles[$step] ?? $steps[$step]['title'];
         $lead = $leads[$step] ?? $steps[$step]['description'];
         $stepKeys = array_keys($steps);
         $back = $custom ? app(\App\Services\SurveyDefinition::class)->url($stepKeys[$index - 2]) : (isset($backs[$step]) ? route($backs[$step]) : route('home'));
     @endphp
-    <section class="survey-shell {{ $step === 'visit' ? 'visit-survey-shell' : '' }} {{ $kind ? $kind . '-survey-shell' : '' }}">
+    <section class="survey-shell {{ $step === 'visit' ? 'visit-survey-shell' : '' }} {{ $kind ? $kind . '-survey-shell' : '' }} {{ $custom ? 'additional-survey-shell' : '' }}">
         @include('feedback.partials.steps', ['activeStep' => $step])
         <section class="survey-card {{ $kind ? 'no-visual ' . $kind . '-survey-card' : '' }} {{ $hasExtra ? 'has-extra' : '' }} {{ $custom ? 'additional-survey-card' : '' }}">
             <div class="survey-content">
@@ -28,7 +29,7 @@
                 <p class="survey-lead">{{ $lead }}</p>
                 <form class="survey-form {{ $step === 'visit' ? 'visit-form' : '' }}" action="{{ $custom ? route('feedback.additional.save', ['stepKey' => $step]) : route($actions[$step]) }}" method="POST" data-survey-form>
                     @csrf
-                    <div class="{{ in_array($step, ['service', 'food']) ? 'service-rating-list ' . ($step === 'food' ? 'food-rating-list' : '') : ($step === 'visit' ? 'survey-form-row' : 'final-question-list') }}">
+                    <div class="{{ in_array($step, ['service', 'food']) ? 'service-rating-list ' . ($step === 'food' ? 'food-rating-list' : '') : ($step === 'visit' ? 'survey-form-row' : ($custom && $hasRatings ? 'service-rating-list food-rating-list additional-rating-list' : 'final-question-list')) }}">
                         @foreach ($questions as $question)
                             @include('feedback.partials.question', ['question' => $question])
                         @endforeach

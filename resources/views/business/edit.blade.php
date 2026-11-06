@@ -27,8 +27,8 @@
                     <div class="business-logo-upload" data-logo-drop>
                         <input id="logo" name="logo" type="file" accept="image/jpeg,image/png" data-logo-input>
                         <span class="business-logo-preview" data-logo-preview>
-                            @if (optional($business)->logo)
-                                <img src="{{ asset($business->logo) }}" alt="Business profile image">
+                            @if (optional($business)->logo_data || optional($business)->logo)
+                                <img src="{{ optional($business)->logo_data ? route('business.logo', ['v' => optional($business)->updated_at?->timestamp]) : asset($business->logo) }}" alt="Business profile image">
                             @else
                                 <span class="business-logo-empty">
                                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V7"></path><path d="m7 12 5-5 5 5"></path><path d="M20 16.5a4.5 4.5 0 0 0-4.3-4.49A6 6 0 1 0 6.2 17H8"></path></svg>

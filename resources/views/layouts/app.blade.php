@@ -1303,9 +1303,10 @@
             gap: 8px;
             height: 29px;
             justify-content: center;
-            min-width: 76px;
+            min-width: 88px;
             padding: 0 10px;
             transition: background .2s ease, border-color .2s ease, color .2s ease;
+            width: 88px;
         }
         .questions-action svg {
             fill: none;
@@ -4735,7 +4736,10 @@
                 $profileName = optional($adminUser->business)->owner_name ?: ($adminUser->name ?: 'Admin');
                 $nameParts = preg_split('/\s+/', trim($profileName));
                 $profileInitials = strtoupper(substr($nameParts[0] ?? 'A', 0, 1) . substr($nameParts[1] ?? 'D', 0, 1));
-                $profileLogo = optional($adminUser->business)->logo;
+                $profileBusiness = $adminUser->business;
+                $profileLogo = optional($profileBusiness)->logo_data
+                    ? route('business.logo', ['v' => optional($profileBusiness->updated_at)->timestamp])
+                    : optional($profileBusiness)->logo;
                 $unreadNotificationCount = $adminUser->notificationCenterItems()->where('is_read', false)->count();
                 $searchingQuestions = request()->routeIs('questions.*');
                 $searchingMessages = request()->routeIs('messages.*');

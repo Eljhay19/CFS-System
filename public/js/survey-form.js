@@ -2,6 +2,7 @@
     const form = document.querySelector('[data-survey-form]');
     if (!form || form.dataset.ready) return;
     form.dataset.ready = '1';
+    const hideUnselectedRatingLabel = Boolean(form.closest('.additional-survey-card'));
     form.querySelectorAll('[data-range]').forEach((slider) => {
         const shell = slider.closest('[data-range-shell]');
         const marker = shell.querySelector('[data-range-selected]');
@@ -20,7 +21,7 @@
         slider.addEventListener('input', select);
         slider.addEventListener('pointerup', select);
         slider.addEventListener('survey:restore', () => {
-            if (output) output.textContent = slider.disabled ? 'N/A' : (marker.value === '1' ? slider.value : 'Select');
+            if (output) output.textContent = slider.disabled ? 'N/A' : (marker.value === '1' ? slider.value : (hideUnselectedRatingLabel ? '' : 'Select'));
             shell.classList.toggle('is-disabled', slider.disabled);
             draw();
         });
@@ -29,7 +30,7 @@
             slider.disabled = na.checked;
             marker.value = na.checked ? '1' : '';
             shell.classList.toggle('is-disabled', na.checked);
-            if (output) output.textContent = na.checked ? 'N/A' : 'Select';
+            if (output) output.textContent = na.checked ? 'N/A' : (hideUnselectedRatingLabel ? '' : 'Select');
             draw();
         });
         // Optional untouched sliders are omitted rather than recorded as the default 5.

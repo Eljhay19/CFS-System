@@ -34,30 +34,56 @@
             <p class="muted questions-filter-note">Search results for "{{ $search }}". <a class="panel-link" href="{{ route('questions.index') }}">Clear search</a></p>
         @endif
 
+        <div class="questions-list-toolbar">
+            <span class="muted">{{ $questions->count() }} {{ $questions->count() === 1 ? 'question' : 'questions' }}</span>
+            <span class="questions-list-note">Core questions move to Archived Questions; custom questions can be permanently deleted.</span>
+            @if ($questions->count() > 4)
+                <button class="questions-text-action" type="button" data-question-list-open>View all questions</button>
+            @endif
+        </div>
         <div class="questions-table-wrap" tabindex="0" role="region" aria-label="Survey questions">
             <table class="questions-table">
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>Question</th>
-                        <th>Type</th>
-                        <th>Required</th>
-                        <th>Actions</th>
+                        <th class="questions-col-number">#</th>
+                        <th class="questions-col-question">Question</th>
+                        <th class="questions-col-type">Type</th>
+                        <th class="questions-col-required">Required</th>
+                        <th class="questions-col-actions">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($questions as $question)
-                        <tr>
-                            <td>{{ $loop->iteration }}</td>
-                            <td>{{ $question->question }}<small class="workflow-table-note">{{ $stepLabels[$question->step] ?? 'Archived Step' }}{{ $question->is_core ? ' / Core' : '' }}</small></td>
-                            <td>{{ ucwords(str_replace('_', ' ', $question->question_type)) }}</td>
-                            <td>{{ $question->required ? 'Yes' : 'No' }}</td>
-                            <td>
+                        <tr data-question-row data-is-core="{{ $question->is_core ? '1' : '0' }}">
+                            <td class="questions-col-number" data-label="#">{{ $loop->iteration }}</td>
+                            <td class="questions-col-question" data-label="Question">{{ $question->question }}<small class="workflow-table-note">{{ $stepLabels[$question->step] ?? 'Archived Step' }}{{ $question->is_core ? ' / Core' : '' }}</small></td>
+                            <td class="questions-col-type" data-label="Type">{{ ucwords(str_replace('_', ' ', $question->question_type)) }}</td>
+                            <td class="questions-col-required" data-label="Required">{{ $question->required ? 'Yes' : 'No' }}</td>
+                            <td class="questions-col-actions" data-label="Actions">
                                 <div class="questions-actions">
                                     <button class="questions-action questions-edit" type="button" data-question-edit data-question-id="{{ $question->id }}">
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 20 8-8-4-4-8 8-2 6 6-2Z"></path><path d="m14 6 4 4"></path></svg>
                                         Edit
                                     </button>
+                                    @if ($question->is_core && ! $question->archived_at)
+                                        <form action="{{ route('questions.destroy', $question) }}" method="POST" data-question-delete-form data-question-delete-mode="archive" data-question-id="{{ $question->id }}">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="questions-action questions-delete-link" type="submit" aria-label="Remove {{ $question->question }} from the active survey">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v5M14 11v5"></path></svg>
+                                                Delete
+                                            </button>
+                                        </form>
+                                    @elseif (! $question->is_core)
+                                        <form action="{{ route('questions.permanently-destroy', $question) }}" method="POST" data-question-delete-form data-question-delete-mode="permanent" data-question-id="{{ $question->id }}">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="questions-action questions-delete-link" type="submit" aria-label="Permanently delete {{ $question->question }}">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v5M14 11v5"></path></svg>
+                                                Delete
+                                            </button>
+                                        </form>
+                                    @endunless
                                     @if ($question->archived_at)
                                     <form action="{{ route('questions.restore', $question) }}" method="POST">@csrf<button class="questions-action questions-edit" type="submit">Restore</button></form>
                                     @elseif (! $question->is_core)
@@ -81,6 +107,23 @@
                 </tbody>
             </table>
         </div>
+        @if ($questions->count() > 4)
+            <dialog class="questions-list-dialog" aria-labelledby="questions-list-title" data-question-list-dialog>
+                <header class="questions-list-dialog-head">
+                    <div><h2 id="questions-list-title">All {{ $archived ? 'Archived ' : '' }}Questions</h2><p>Custom questions are shown first. Deleting a core question moves it to Archived Questions and keeps saved feedback; custom questions can be permanently deleted when they have no saved responses.</p></div>
+                    <button class="terms-close" type="button" aria-label="Close all questions" data-question-list-close>&times;</button>
+                </header>
+                <div class="questions-list-dialog-table" data-question-list-mount></div>
+            </dialog>
+        @endif
+        <dialog class="question-delete-confirm" aria-labelledby="question-delete-title" aria-describedby="question-delete-message" data-question-delete-dialog>
+            <h2 id="question-delete-title">Delete this question?</h2>
+            <p id="question-delete-message" data-delete-question-message>Are you sure you want to permanently delete <strong data-delete-question-label>this question</strong>? This cannot be undone.</p>
+            <div class="question-delete-confirm-actions">
+                <button class="question-delete-no" type="button" data-delete-question-no>No</button>
+                <button class="question-delete-yes" type="button" data-delete-question-yes>Yes, delete</button>
+            </div>
+        </dialog>
     </section>
 
     @php
@@ -109,7 +152,7 @@
             <div class="question-modal-head">
                 <h2 id="question-modal-title" data-question-modal-title>Add New Question</h2>
                 <p data-question-modal-subtitle>Create a survey item for your feedback form.</p>
-                <p class="question-core-edit-note" data-core-edit-note hidden>Core survey structure is protected so existing answers and the five-step survey keep working. You can edit the question text, hint, and display order.</p>
+                <p class="question-core-edit-note" data-core-edit-note hidden>Core questions stay part of the survey, but their wording, type, section, hint, and display order can be changed.</p>
             </div>
 
             <form class="question-modal-form" action="{{ route('questions.store') }}" method="POST" data-question-form data-store-action="{{ route('questions.store') }}">
@@ -181,7 +224,17 @@
         (() => {
             const modal = document.querySelector('[data-question-modal]');
             const openButton = document.querySelector('[data-question-modal-open]');
-            const editButtons = document.querySelectorAll('[data-question-edit]');
+            const questionListDialog = document.querySelector('[data-question-list-dialog]');
+            const questionListOpen = document.querySelector('[data-question-list-open]');
+            const questionListClose = document.querySelector('[data-question-list-close]');
+            const questionListMount = document.querySelector('[data-question-list-mount]');
+            const sourceQuestionTable = document.querySelector('.questions-table-wrap .questions-table');
+            const questionTableWrap = document.querySelector('.questions-table-wrap');
+            const deleteDialog = document.querySelector('[data-question-delete-dialog]');
+            const deleteQuestionLabel = document.querySelector('[data-delete-question-label]');
+            const deleteQuestionMessage = document.querySelector('[data-delete-question-message]');
+            const deleteNoButton = document.querySelector('[data-delete-question-no]');
+            const deleteYesButton = document.querySelector('[data-delete-question-yes]');
             const closeButtons = document.querySelectorAll('[data-question-modal-close]');
             const form = document.querySelector('[data-question-form]');
             const modalTitle = document.querySelector('[data-question-modal-title]');
@@ -193,6 +246,7 @@
             const sortOrderInput = document.querySelector('[data-sort-order]');
             const stepSelect = document.querySelector('#modal_step');
             let editingCore = false;
+            let pendingDeleteForm = null;
             const questionText = document.querySelector('[data-question-text]');
             const questionCount = document.querySelector('[data-question-count]');
             const typeSelect = document.querySelector('[data-question-type]');
@@ -300,7 +354,7 @@
             }
 
             function toggleChoices() {
-                const acceptsChoices = typeSelect.value === 'multiple_choice' && !editingCore;
+                const acceptsChoices = typeSelect.value === 'multiple_choice';
                 choiceSection.hidden = !acceptsChoices;
                 if (acceptsChoices) {
                     const defaults = typeSelect.value === 'rating' ? ratingDefaults : choiceDefaults;
@@ -358,7 +412,7 @@
             function prepareEditModal(question) {
                 editingCore = Boolean(question.is_core);
                 coreEditNote.hidden = !editingCore;
-                typeSelect.disabled = editingCore; stepSelect.disabled = editingCore; requiredInput.disabled = editingCore;
+                typeSelect.disabled = false; stepSelect.disabled = false; requiredInput.disabled = editingCore;
                 stepSelect.value = question.step || 'final';
                 modal.classList.add('is-editing');
                 form.action = question.action;
@@ -409,16 +463,81 @@
                 prepareAddModal();
                 openModal();
             });
-            editButtons.forEach((button) => {
-                button.addEventListener('click', () => {
-                    const question = questionsData[button.dataset.questionId];
-                    if (!question) {
+            document.addEventListener('click', (event) => {
+                const button = event.target.closest('[data-question-edit]');
+                if (!button) return;
+                const question = questionsData[button.dataset.questionId];
+                if (!question) return;
+                questionListDialog?.close();
+                prepareEditModal(question);
+                openModal();
+            });
+            const questionRows = Array.from(document.querySelectorAll('[data-question-row]'));
+            let questionRowsFitFrame = 0;
+            const fitQuestionRows = () => {
+                cancelAnimationFrame(questionRowsFitFrame);
+                questionRowsFitFrame = requestAnimationFrame(() => {
+                    if (window.matchMedia('(max-width: 760px)').matches || !questionTableWrap) {
+                        questionRows.forEach((row, index) => { row.hidden = index >= 4; });
                         return;
                     }
 
-                    prepareEditModal(question);
-                    openModal();
+                    questionRows.forEach((row) => { row.hidden = false; });
+                    const tableHeader = sourceQuestionTable?.querySelector('thead');
+                    const availableHeight = questionTableWrap.clientHeight - (tableHeader?.getBoundingClientRect().height || 0);
+                    let usedHeight = 0;
+                    let visibleRows = 0;
+
+                    questionRows.forEach((row) => {
+                        const rowHeight = row.getBoundingClientRect().height;
+                        const fits = usedHeight + rowHeight <= availableHeight + 1 || visibleRows === 0;
+                        row.hidden = !fits;
+                        if (fits) {
+                            usedHeight += rowHeight;
+                            visibleRows += 1;
+                        }
+                    });
                 });
+            };
+            fitQuestionRows();
+            window.addEventListener('resize', fitQuestionRows, { passive: true });
+            if (window.ResizeObserver && questionTableWrap) {
+                new ResizeObserver(fitQuestionRows).observe(questionTableWrap);
+            }
+            questionListOpen?.addEventListener('click', () => {
+                if (!sourceQuestionTable || !questionListDialog || !questionListMount) return;
+                const fullTable = sourceQuestionTable.cloneNode(true);
+                fullTable.querySelectorAll('tr[hidden]').forEach((row) => row.removeAttribute('hidden'));
+                const tableBody = fullTable.querySelector('tbody');
+                Array.from(tableBody?.querySelectorAll('[data-question-row]') || [])
+                    .sort((first, second) => Number(first.dataset.isCore) - Number(second.dataset.isCore))
+                    .forEach((row) => tableBody.appendChild(row));
+                questionListMount.replaceChildren(fullTable);
+                questionListDialog.showModal();
+            });
+            questionListClose?.addEventListener('click', () => questionListDialog?.close());
+            document.addEventListener('submit', (event) => {
+                const deleteForm = event.target.closest('[data-question-delete-form]');
+                if (!deleteForm) return;
+                event.preventDefault();
+                pendingDeleteForm = deleteForm;
+                const question = questionsData[deleteForm.dataset.questionId];
+                deleteQuestionLabel.textContent = question?.question || 'this question';
+                const coreRemoval = deleteForm.dataset.questionDeleteMode === 'archive';
+                deleteQuestionMessage.firstChild.textContent = coreRemoval
+                    ? 'Are you sure you want to remove '
+                    : 'Are you sure you want to permanently delete ';
+                deleteQuestionMessage.lastChild.textContent = coreRemoval
+                    ? '? It will move to Archived Questions and existing feedback will be kept.'
+                    : '? This cannot be undone and is allowed only if there are no saved responses.';
+                deleteYesButton.textContent = coreRemoval ? 'Yes, remove' : 'Yes, delete';
+                deleteDialog.showModal();
+                deleteNoButton.focus();
+            });
+            deleteNoButton.addEventListener('click', () => deleteDialog.close());
+            deleteDialog.addEventListener('close', () => { pendingDeleteForm = null; });
+            deleteYesButton.addEventListener('click', () => {
+                if (pendingDeleteForm) pendingDeleteForm.submit();
             });
             closeButtons.forEach((button) => button.addEventListener('click', closeModal));
             modal.addEventListener('click', (event) => {

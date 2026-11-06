@@ -289,6 +289,27 @@ dialog { max-height: calc(100dvh - 32px); overflow-y: auto; }
     body.login-screen .container { max-height: none; min-height: 0; overflow: visible; padding: 24px 0; }
 }
 
+@media (max-width: 760px) {
+    .additional-survey-shell {
+        grid-template-columns: minmax(0, 1fr);
+        width: min(100%, 720px);
+    }
+    .survey-card.additional-survey-card {
+        height: auto;
+        max-width: 100%;
+        max-height: 455px;
+        min-height: 270px;
+        width: 100%;
+    }
+    .additional-survey-card .survey-content { padding: 16px 18px 12px; }
+    .additional-survey-card .service-rating-row { grid-template-columns: 30px minmax(0, 1fr); }
+    .additional-survey-card .survey-actions { gap: 10px; }
+}
+
+@media (max-width: 640px) {
+    .additional-survey-shell { width: min(100%, 360px); }
+}
+
 @media (max-width: 360px) {
     .admin-side-nav a, .admin-side-nav button { font-size: 11px; padding-inline: 4px; }
     .dashboard-card-grid, .feedback-kpi-grid { grid-template-columns: minmax(0, 1fr); }

@@ -174,13 +174,8 @@ class CustomerFeedbackController extends Controller
     public function saveVisit(Request $request)
     {
         $this->ensureStarted();
-        $data = $request->validate(array_merge([
-            'date_of_visit' => ['required', 'date_format:Y-m-d', 'before_or_equal:today'],
-            'time_of_order' => ['required', 'date_format:H:i'],
-        ], $this->definition->extraRules('visit')));
-        if (Carbon::parse($data['date_of_visit'] . ' ' . $data['time_of_order'])->gt(now())) {
-            throw ValidationException::withMessages(['time_of_order' => 'Future date and time entries are not allowed.']);
-        }
+        $this->normalizeCoreRequest($request, 'visit');
+        $data = $this->validateSurveyStep($request, 'visit', array_merge($this->definition->coreRules('visit'), $this->definition->extraRules('visit')));
         return $this->saveStep('visit', 'visit', $data, 'feedback.order');
     }
 
@@ -193,9 +188,8 @@ class CustomerFeedbackController extends Controller
     public function saveOrder(Request $request)
     {
         $this->ensureStep('visit');
-        $data = $request->validate(array_merge([
-            'order_type' => ['required', 'in:Dine In,Take Out'], 'order_details' => ['required', 'string', 'max:1000'],
-        ], $this->definition->extraRules('order')));
+        $this->normalizeCoreRequest($request, 'order');
+        $data = $this->validateSurveyStep($request, 'order', array_merge($this->definition->coreRules('order'), $this->definition->extraRules('order')));
         return $this->saveStep('order', 'order', $data, 'feedback.store-rating');
     }
 
@@ -208,15 +202,11 @@ class CustomerFeedbackController extends Controller
     public function saveStoreRating(Request $request)
     {
         $this->ensureStep('order');
-        $data = $request->validate(array_merge([
-            'cleanliness_selected' => ['accepted'], 'speed_of_service_selected' => ['accepted'],
-            'staff_selected' => $request->boolean('staff_na') ? ['nullable'] : ['accepted'],
-            'staff_na' => ['nullable', 'boolean'], 'cleanliness' => ['required', 'integer', 'between:1,10'],
-            'speed_of_service' => ['required', 'integer', 'between:1,10'],
-            'staff' => [Rule::requiredIf(! $request->boolean('staff_na')), 'nullable', 'integer', 'between:1,10'],
-        ], $this->definition->extraRules('service')));
-        $values = ['cleanliness' => $data['cleanliness'], 'speed_of_service' => $data['speed_of_service'], 'staff' => $request->boolean('staff_na') ? 'N/A' : $data['staff']];
-        return $this->saveStep('service', 'store_rating', array_merge($values, ['extra' => $data['extra'] ?? []]), 'feedback.food-rating');
+        $this->normalizeCoreRequest($request, 'service');
+        $data = $this->validateSurveyStep($request, 'service', array_merge($this->definition->coreRules('service'), $this->definition->extraRules('service'), [
+            'staff_na' => ['nullable', 'boolean'],
+        ]));
+        return $this->saveStep('service', 'store_rating', $data, 'feedback.food-rating');
     }
 
     public function foodRating()
@@ -228,13 +218,10 @@ class CustomerFeedbackController extends Controller
     public function saveFoodRating(Request $request)
     {
         $this->ensureStep('store_rating');
-        $rules = $this->definition->extraRules('food');
-        foreach (['taste', 'freshness', 'temperature', 'presentation', 'value_for_money'] as $key) {
-            $rules['food_ratings.' . $key] = ['required', 'integer', 'between:1,10'];
-            $rules['food_rating_selected.' . $key] = ['accepted'];
-        }
-        $data = $request->validate($rules);
-        return $this->saveStep('food', 'food_rating', array_merge($data['food_ratings'], ['extra' => $data['extra'] ?? []]), 'feedback.final');
+        $this->normalizeCoreRequest($request, 'food');
+        $rules = array_merge($this->definition->coreRules('food'), $this->definition->extraRules('food'));
+        $data = $this->validateSurveyStep($request, 'food', $rules);
+        return $this->saveStep('food', 'food_rating', $data, 'feedback.final');
     }
 
     public function finalStep()
@@ -246,11 +233,8 @@ class CustomerFeedbackController extends Controller
     public function saveFinal(Request $request)
     {
         $this->ensureStep('food_rating');
-        $data = $request->validate(array_merge([
-            'order_accurate' => ['required', 'in:Like Up,Like Down'], 'food_satisfied' => ['required', 'in:Like Up,Like Down'],
-            'problem_today' => ['required', 'in:Yes,No'],
-            'problem_comment' => [Rule::requiredIf($request->input('problem_today') === 'Yes'), 'nullable', 'string', 'max:1000'],
-        ], $this->definition->extraRules('final')));
+        $this->normalizeCoreRequest($request, 'final');
+        $data = $this->validateSurveyStep($request, 'final', array_merge($this->definition->coreRules('final'), $this->definition->extraRules('final')));
         $response = $this->saveStep('final', 'final', $data, 'feedback.review');
         $next = array_keys(array_diff_key($this->definition->steps(), SurveyDefinition::STEPS))[0] ?? null;
         return $next ? redirect()->to($this->definition->url($next)) : $response;
@@ -267,7 +251,10 @@ class CustomerFeedbackController extends Controller
     public function saveAdditional(Request $request, string $stepKey)
     {
         $this->ensureAdditional($stepKey);
-        $data = $request->validate($this->definition->extraRules($stepKey));
+        $this->normalizeCoreRequest($request, $stepKey);
+        $data = $this->validateSurveyStep($request, $stepKey, array_merge($this->definition->coreRules($stepKey), $this->definition->extraRules($stepKey)));
+        $this->assertVisitTimeIsNotFuture($data);
+        $this->saveQuestionAnswers($data);
         session()->put('survey.extras.' . $stepKey, $data['extra'] ?? []);
         session()->put('survey.completed_custom.' . $stepKey, true);
         session()->put('survey.expires_at', now()->addMinutes(config('feedback.draft_minutes', 120))->toIso8601String());
@@ -290,12 +277,103 @@ class CustomerFeedbackController extends Controller
 
     private function saveStep(string $step, string $section, array $data, string $next)
     {
+        $this->assertVisitTimeIsNotFuture($data);
+        $coreAnswers = $data['core'] ?? [];
         session()->put('survey.extras.' . $step, $data['extra'] ?? []);
-        unset($data['extra'], $data['extra_selected']);
+        unset($data['core'], $data['core_selected'], $data['extra'], $data['extra_selected'], $data['staff_na']);
         session()->put('survey.' . $section, $data);
+        $this->saveQuestionAnswers(['core' => $coreAnswers]);
         session()->put('survey.expires_at', now()->addMinutes(config('feedback.draft_minutes', 120))->toIso8601String());
         session()->forget('survey.reviewed');
         return redirect()->route($next);
+    }
+
+    private function saveQuestionAnswers(array $data): void
+    {
+        $answers = $data['core'] ?? [];
+        if (request()->boolean('staff_na')) {
+            $staffQuestion = collect(session('survey.questions', []))->first(fn ($question) => $question['core'] && $question['key'] === 'staff' && $question['type'] === 'rating');
+            if ($staffQuestion) $answers[$staffQuestion['id']] = 'N/A';
+        }
+        if ($answers) {
+            session()->put('survey.core', array_replace(session('survey.core', []), $answers));
+
+            $legacySections = ['visit' => 'visit', 'order' => 'order', 'service' => 'store_rating', 'food' => 'food_rating', 'final' => 'final'];
+            foreach ($answers as $id => $value) {
+                $question = collect(session('survey.questions', []))->first(fn ($candidate) => $candidate['core'] && (string) $candidate['id'] === (string) $id);
+                if (! $question || ! isset($legacySections[$question['step']])) continue;
+                $section = $legacySections[$question['step']];
+                session()->put('survey.' . $section . '.' . $question['key'], $value);
+            }
+        }
+    }
+
+    private function normalizeCoreRequest(Request $request, string $step): void
+    {
+        $core = $request->input('core', []);
+        $selected = $request->input('core_selected', []);
+
+        foreach ($this->definition->questions($step) as $question) {
+            if (! $question['core']) continue;
+
+            $id = $question['id'];
+            $key = $question['key'];
+            if (! array_key_exists($id, $core)) {
+                $legacyValue = $step === 'food'
+                    ? $request->input('food_ratings.' . $key)
+                    : $request->input($key);
+                if ($legacyValue !== null) $core[$id] = $legacyValue;
+            }
+
+            if ($question['type'] === 'rating' && ! array_key_exists($id, $selected)) {
+                $legacySelected = $step === 'food'
+                    ? $request->input('food_rating_selected.' . $key)
+                    : $request->input($key . '_selected');
+                if ($legacySelected !== null) $selected[$id] = $legacySelected;
+            }
+        }
+
+        $request->merge(['core' => $core, 'core_selected' => $selected]);
+    }
+
+    private function validateSurveyStep(Request $request, string $step, array $rules): array
+    {
+        try {
+            return $request->validate($rules);
+        } catch (ValidationException $exception) {
+            $errors = $exception->errors();
+            $questions = collect(session('survey.questions', []))->filter(fn ($question) => $question['core'] && $question['step'] === $step);
+
+            foreach ($questions as $question) {
+                $id = $question['id'];
+                $legacyField = $step === 'food' && $question['type'] === 'rating'
+                    ? 'food_ratings.' . $question['key']
+                    : $question['key'];
+                foreach (['core.' . $id => $legacyField, 'core_selected.' . $id => ($step === 'food' ? 'food_rating_selected.' . $question['key'] : $question['key'] . '_selected')] as $field => $alias) {
+                    foreach ($errors[$field] ?? [] as $message) $errors[$alias][] = $message;
+                }
+            }
+
+            throw ValidationException::withMessages($errors);
+        }
+    }
+
+    private function assertVisitTimeIsNotFuture(array $data): void
+    {
+        $answers = array_replace(session('survey.core', []), $data['core'] ?? []);
+        $questions = collect(session('survey.questions', []));
+        $dateQuestion = $questions->first(fn ($question) => $question['core'] && $question['key'] === 'date_of_visit' && $question['type'] === 'comment');
+        $timeQuestion = $questions->first(fn ($question) => $question['core'] && $question['key'] === 'time_of_order' && $question['type'] === 'comment');
+        if (! $dateQuestion || ! $timeQuestion) return;
+
+        $date = $answers[$dateQuestion['id']] ?? null;
+        $time = $answers[$timeQuestion['id']] ?? null;
+        if ($date && $time && Carbon::parse($date . ' ' . $time)->gt(now())) {
+            throw ValidationException::withMessages([
+                'core.' . $timeQuestion['id'] => 'Future date and time entries are not allowed.',
+                'time_of_order' => 'Future date and time entries are not allowed.',
+            ]);
+        }
     }
 
     public function review()
