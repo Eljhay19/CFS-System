@@ -82,14 +82,6 @@
                                                 Delete
                                             </button>
                                         </form>
-                                        <form action="{{ route('questions.destroy', $question) }}" method="POST" onsubmit="return confirm('Archive this question? Existing answers will be preserved.')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button class="questions-action questions-delete" type="submit">
-                                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v5M14 11v5"></path></svg>
-                                                Archive
-                                            </button>
-                                        </form>
                                     @endif
                                 </div>
                             </td>
@@ -124,6 +116,8 @@
             $question->id => [
                 'id' => $question->id,
                 'action' => route('questions.update', $question),
+                'archive_action' => route('questions.destroy', $question),
+                'archived' => (bool) $question->archived_at,
                 'question' => $question->question,
                 'question_type' => $question->question_type,
                 'required' => (bool) $question->required,
@@ -206,9 +200,14 @@
                 </div>
 
                 <div class="question-modal-actions">
+                    <button class="question-modal-archive" type="submit" form="question-archive-form" data-question-archive hidden>Archive</button>
                     <button class="button question-cancel" type="button" data-question-modal-close>Cancel</button>
                     <button class="button question-save" type="submit">Save</button>
                 </div>
+            </form>
+            <form id="question-archive-form" method="POST" data-archive-form onsubmit="return confirm('Archive this question? Existing answers will be preserved.')" hidden>
+                @csrf
+                @method('DELETE')
             </form>
         </div>
     </div>
@@ -229,6 +228,8 @@
             const deleteYesButton = document.querySelector('[data-delete-question-yes]');
             const closeButtons = document.querySelectorAll('[data-question-modal-close]');
             const form = document.querySelector('[data-question-form]');
+            const archiveForm = document.querySelector('[data-archive-form]');
+            const archiveButton = document.querySelector('[data-question-archive]');
             const modalTitle = document.querySelector('[data-question-modal-title]');
             const modalSubtitle = document.querySelector('[data-question-modal-subtitle]');
             const coreEditNote = document.querySelector('[data-core-edit-note]');
@@ -379,6 +380,8 @@
 
             function prepareAddModal(useCurrentValues = false) {
                 editingCore = false;
+                archiveForm.action = '';
+                archiveButton.hidden = true;
                 coreEditNote.hidden = true;
                 typeSelect.disabled = false; stepSelect.disabled = false; requiredInput.disabled = false;
                 stepSelect.value = @json(old('step', 'final'));
@@ -408,6 +411,8 @@
 
             function prepareEditModal(question) {
                 editingCore = Boolean(question.is_core);
+                archiveForm.action = question.archive_action || '';
+                archiveButton.hidden = Boolean(question.archived);
                 coreEditNote.hidden = !editingCore;
                 typeSelect.disabled = false; stepSelect.disabled = false; requiredInput.disabled = editingCore;
                 stepSelect.value = question.step || 'final';

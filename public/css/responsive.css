@@ -6,6 +6,33 @@ body > .container { flex: 1; min-width: 0; }
 .footer { flex-shrink: 0; }
 .admin-workspace { min-height: max(560px, calc(100dvh - 160px)); }
 .admin-main { min-height: inherit; }
+/* Give every desktop admin section the same fixed space between the header and footer. */
+@media (min-width: 1051px) {
+    body.admin-screen {
+        height: 100dvh;
+        min-height: 100dvh;
+        overflow: hidden;
+    }
+    body.admin-screen > .container {
+        display: flex;
+        flex: 1 1 0;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+    }
+    body.admin-screen .admin-workspace {
+        flex: 1 1 0;
+        height: auto;
+        min-height: 0;
+    }
+    body.admin-screen .admin-workspace > .admin-sidebar,
+    body.admin-screen .admin-workspace > .admin-main {
+        box-sizing: border-box;
+        height: 100%;
+        min-height: 0;
+        overflow: auto;
+    }
+}
 @media (min-width: 761px) {
     body.admin-screen > .container {
         display: flex;
