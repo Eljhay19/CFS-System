@@ -16,7 +16,7 @@
 .question-view-tabs { border-bottom: 1px solid var(--line); display: flex; gap: 20px; }
 .question-view-tabs a { border-bottom: 2px solid transparent; color: var(--muted); font-size: 12px; padding: 8px 0; }
 .question-view-tabs a[aria-current="page"] { border-bottom-color: var(--orange); color: var(--ink); font-weight: 600; }
-.questions-table-wrap { min-width: 0; overflow-x: auto; overscroll-behavior: contain; }
+.questions-table-wrap { max-height: min(54dvh, 520px); min-width: 0; overflow: hidden; overscroll-behavior: contain; }
 .questions-table { max-width: 1040px; min-width: 650px; table-layout: fixed; width: 100%; }
 .questions-table td:nth-child(2) { min-width: 220px; overflow-wrap: anywhere; }
 .questions-table th.questions-col-number, .questions-table td.questions-col-number { text-align: center; width: 56px; }
@@ -84,17 +84,6 @@
 .question-modal { max-height: calc(100dvh - 32px); }
 .question-core-edit-note { background: #f7f9fc; border-left: 2px solid var(--orange); color: var(--muted); font-size: 11px; line-height: 1.45; margin: -8px 0 8px; padding: 7px 9px; }
 .question-core-edit-note[hidden] { display: none !important; }
-/* Keep the questions page in its admin panel and use one vertical scroll area. */
-@media (min-width: 761px) {
-    body.admin-screen .admin-main:has(.questions-panel) { overflow: hidden; }
-    .questions-panel { display: flex; flex-direction: column; gap: 12px; height: 100%; max-height: none; overflow: hidden; }
-    .questions-head, .question-view-tabs, .additional-steps, .questions-filter-note, .questions-list-toolbar { flex: 0 0 auto; }
-    .questions-table-wrap { flex: 1 1 auto; min-height: 0; overflow: hidden; }
-}
-@media (max-width: 760px) {
-    .questions-panel { height: auto; max-height: none; overflow: visible; }
-    .questions-table-wrap { max-height: none; overflow: visible; }
-}
 @media (max-width: 900px) {
     .questions-list-dialog { max-height: calc(100dvh - 24px); padding: 16px; width: calc(100vw - 24px); }
     .questions-list-dialog-head { gap: 12px; margin-bottom: 12px; }
