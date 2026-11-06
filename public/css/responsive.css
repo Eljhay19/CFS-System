@@ -439,16 +439,16 @@ input, select, textarea, button { max-width: 100%; }
     .contact-card .terms-heading h1 { font-size: clamp(26px, 7vw, 32px); }
     .contact-form { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
     .contact-scroll { max-height: none; overflow: visible; padding: 0; }
-    .contact-details { border: 0; gap: 8px; grid-template-columns: minmax(0, 1fr); margin: 0 0 14px; padding: 0; }
-    .contact-details > div, .contact-details > div:last-child { background: rgba(246,248,251,.9); border: 0; border-radius: 8px; gap: 10px; padding: 10px 12px; }
+    .contact-details { border: 0; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0 0 14px; padding: 0; }
+    .contact-details > div, .contact-details > div:last-child { background: rgba(246,248,251,.9); border: 0; border-radius: 8px; gap: 8px; min-width: 0; padding: 10px 8px; }
     .contact-details .ui-icon { flex: 0 0 20px; height: 20px; width: 20px; }
     .contact-fields { gap: 12px; grid-template-columns: minmax(0, 1fr); }
     .contact-input { min-height: 42px; }
     .contact-input input { height: 40px; }
     .contact-input textarea { min-height: 100px; }
-    .contact-actions { align-items: stretch; display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
-    .contact-card .survey-back-link { justify-self: start; }
-    .contact-send { min-height: 42px; width: 100%; }
+    .contact-actions { align-items: center; display: flex; flex-wrap: nowrap; gap: 8px; justify-content: space-between; }
+    .contact-card .survey-back-link { flex: 0 1 auto; justify-self: auto; white-space: nowrap; }
+    .contact-send { flex: 0 0 auto; min-height: 42px; white-space: nowrap; width: auto; }
     .contact-fields { grid-template-columns: minmax(0, 1fr); }
     .survey-card, .terms-card, .thank-you-card { margin-inline: auto; }
     .survey-form-row, .survey-content-grid { grid-template-columns: minmax(0, 1fr); }
@@ -699,14 +699,16 @@ input, select, textarea, button { max-width: 100%; }
         width: calc(100% - 12px);
     }
 
-    /* Keep the six OTP cells compact and left aligned on phones and tablets.
+    /* Keep the six OTP cells compact and centered on phones and tablets.
        This override follows the shared recovery sizing rule so it wins the cascade. */
     .recovery-screen .auth-card.recovery-sent .recovery-code-entry {
-        margin-left: 0;
-        margin-right: auto;
+        margin-inline: auto;
         max-width: 228px;
         width: min(228px, 100%);
     }
+    .recovery-screen .auth-card.recovery-sent .recovery-code-field { margin-inline: auto; max-width: 228px; width: 100%; }
+    .recovery-screen .auth-card.recovery-sent .recovery-code-field > label,
+    .recovery-screen .auth-card.recovery-sent .recovery-code-help { text-align: center; }
 }
 
 /* Admin phone and tablet refinements. Desktop styles stay as designed. */
