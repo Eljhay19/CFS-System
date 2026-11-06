@@ -4855,7 +4855,7 @@
     <script src="{{ asset('js/flash-toast.js') }}?v={{ filemtime(public_path('js/flash-toast.js')) }}" defer></script>
     <script src="{{ asset('js/form-submit-feedback.js') }}?v={{ filemtime(public_path('js/form-submit-feedback.js')) }}" defer></script>
     <script src="{{ asset('js/page-motion.js') }}?v={{ filemtime(public_path('js/page-motion.js')) }}" defer></script>
-    @auth<script src="{{ asset('js/header-search.js') }}" defer></script>@endauth
+    @auth<script src="{{ asset('js/header-search.js') }}?v={{ filemtime(public_path('js/header-search.js')) }}" defer></script>@endauth
     @auth<script src="{{ asset('js/chart-motion.js') }}?v={{ filemtime(public_path('js/chart-motion.js')) }}" defer></script>@endauth
     <script src="{{ asset('js/survey-form.js') }}" defer></script>
     <script src="{{ asset('js/survey-draft.js') }}" defer

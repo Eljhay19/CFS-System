@@ -945,6 +945,170 @@ input, select, textarea, button { max-width: 100%; }
         overflow: hidden;
     }
 }
+/* On smaller screens the Manage Questions preview joins normal page scrolling
+   so the customer can reach every displayed row and the footer. */
+@media (max-width: 900px) {
+    body.admin-screen:has(.questions-panel) {
+        height: auto;
+        min-height: 100dvh;
+        overflow-y: auto;
+    }
+    body.admin-screen:has(.questions-panel) > .container {
+        flex: 1 0 auto;
+        min-height: 0;
+        overflow: visible;
+    }
+    body.admin-screen:has(.questions-panel) .admin-workspace {
+        height: auto;
+        min-height: 0;
+        grid-template-rows: auto auto;
+    }
+    body.admin-screen:has(.questions-panel) .admin-workspace > .admin-main {
+        height: auto;
+        min-height: 0;
+        overflow: visible;
+    }
+    body.admin-screen .questions-panel {
+        height: auto;
+        max-height: none;
+        overflow: visible;
+    }
+    body.admin-screen .questions-table-wrap {
+        max-height: none;
+        overflow: visible;
+    }
+    body.admin-screen .questions-list-toolbar {
+        display: grid;
+        gap: 8px 12px;
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+    body.admin-screen .questions-list-toolbar > .muted {
+        grid-column: 1;
+        grid-row: 1;
+    }
+    body.admin-screen .questions-list-toolbar .questions-list-note {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+    body.admin-screen .questions-list-toolbar [data-question-list-open] {
+        grid-column: 2;
+        grid-row: 1;
+        justify-self: end;
+    }
+    body.admin-screen .questions-panel > .questions-table-wrap > .questions-table {
+        display: block;
+        min-width: 0;
+        width: 100%;
+    }
+    body.admin-screen .questions-panel > .questions-table-wrap > .questions-table thead {
+        display: none;
+    }
+    body.admin-screen .questions-panel > .questions-table-wrap > .questions-table tbody {
+        display: grid;
+        gap: 8px;
+    }
+    body.admin-screen .questions-panel > .questions-table-wrap > .questions-table tbody tr[data-question-row] {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        padding: 5px 10px;
+    }
+    body.admin-screen .questions-panel > .questions-table-wrap > .questions-table tbody td {
+        align-items: center;
+        border: 0;
+        display: grid;
+        font-size: 12px;
+        gap: 10px;
+        grid-template-columns: 72px minmax(0, 1fr);
+        min-width: 0;
+        padding: 6px 0;
+        text-align: left;
+    }
+    body.admin-screen .questions-panel > .questions-table-wrap > .questions-table tbody td::before {
+        color: var(--muted);
+        content: attr(data-label);
+        font-size: 10px;
+        font-weight: 700;
+    }
+    body.admin-screen .questions-panel > .questions-table-wrap > .questions-table tbody td[data-label="Actions"] {
+        grid-template-columns: 72px minmax(0, 1fr);
+    }
+    body.admin-screen .questions-panel .questions-actions {
+        align-items: center;
+        flex-direction: row !important;
+        flex-wrap: nowrap;
+        gap: 8px;
+        min-width: 0;
+    }
+    body.admin-screen .questions-panel .questions-actions > form {
+        display: inline-flex;
+        flex: 0 0 auto;
+    }
+    body.admin-screen .questions-panel .questions-edit {
+        flex: 0 0 auto;
+    }
+    body.admin-screen .questions-panel .questions-delete-link {
+        white-space: nowrap;
+    }
+    body.admin-screen .question-modal-backdrop {
+        align-items: flex-start;
+        height: 100dvh;
+        overflow: hidden;
+        padding: 12px;
+        -webkit-overflow-scrolling: touch;
+    }
+    body.admin-screen .question-modal {
+        flex: 0 1 auto;
+        max-height: calc(100% - 24px);
+        margin-block: auto;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior-y: contain;
+        touch-action: pan-y;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+/* Suggestions appear under the question search without changing other search boxes. */
+.top-search[aria-label="Search questions"] {
+    overflow: visible;
+    position: relative;
+}
+.top-search-suggestions {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: 0 12px 28px rgba(7, 24, 58, .18);
+    display: grid;
+    left: 0;
+    max-height: min(360px, 55dvh);
+    min-width: min(320px, calc(100vw - 24px));
+    overflow-y: auto;
+    padding: 5px;
+    position: absolute;
+    right: auto;
+    top: calc(100% + 7px);
+    z-index: 1200;
+}
+.top-search-suggestions[hidden] { display: none; }
+.top-search-suggestion {
+    background: transparent;
+    border: 0;
+    border-radius: 5px;
+    color: var(--ink);
+    cursor: pointer;
+    display: grid;
+    gap: 3px;
+    padding: 9px 10px;
+    text-align: left;
+    width: 100%;
+}
+.top-search-suggestion:hover, .top-search-suggestion[aria-selected="true"] { background: #f2f6fb; }
+.top-search-suggestion strong { font-size: 12px; font-weight: 600; line-height: 1.4; }
+.top-search-suggestion small, .top-search-suggestion-empty { color: var(--muted); font-size: 10px; line-height: 1.4; }
+.top-search-suggestion-empty { padding: 10px; }
+.top-search[aria-label="Search questions"]:focus-within { z-index: 1201; }
 body .terms-close { transition: color 160ms ease; }
 body .terms-close:hover, body .terms-close:focus-visible { transform: none; }
 

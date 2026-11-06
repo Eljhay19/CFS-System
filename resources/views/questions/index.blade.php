@@ -296,11 +296,16 @@
             function openModal(focusTarget = questionText) {
                 modal.hidden = false;
                 document.body.classList.add('question-modal-open');
-                setTimeout(() => focusTarget?.focus(), 30);
+                setTimeout(() => {
+                    syncModalViewport();
+                    focusTarget?.focus();
+                }, 30);
             }
 
             function closeModal() {
                 modal.hidden = true;
+                modal.style.removeProperty('top');
+                modal.style.removeProperty('height');
                 document.body.classList.remove('question-modal-open');
             }
 
@@ -473,11 +478,31 @@
             });
             const questionRows = Array.from(document.querySelectorAll('[data-question-row]'));
             const fitQuestionRows = () => {
-                const visibleLimit = window.matchMedia('(max-width: 760px)').matches ? 4 : 7;
+                const visibleLimit = 7;
                 questionRows.forEach((row, index) => { row.hidden = index >= visibleLimit; });
             };
             fitQuestionRows();
             window.addEventListener('resize', fitQuestionRows, { passive: true });
+
+            const syncModalViewport = () => {
+                if (modal.hidden) return;
+                const viewport = window.visualViewport;
+                const height = viewport?.height || window.innerHeight;
+                const offsetTop = viewport?.offsetTop || 0;
+                modal.style.top = `${offsetTop}px`;
+                modal.style.height = `${height}px`;
+                modal.querySelector(':focus')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+            };
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', syncModalViewport, { passive: true });
+                window.visualViewport.addEventListener('scroll', syncModalViewport, { passive: true });
+            }
+            modal.addEventListener('focusin', () => {
+                window.setTimeout(syncModalViewport, 80);
+            });
+            modal.addEventListener('focusout', () => {
+                window.setTimeout(syncModalViewport, 80);
+            });
             questionListOpen?.addEventListener('click', () => {
                 if (!sourceQuestionTable || !questionListDialog || !questionListMount) return;
                 const fullTable = sourceQuestionTable.cloneNode(true);
