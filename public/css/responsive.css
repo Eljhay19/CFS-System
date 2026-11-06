@@ -1119,6 +1119,18 @@ input, select, textarea, button { max-width: 100%; }
 /* Keep the notification panel above the fixed mobile/tablet header so its
    heading, unread count, actions, and pointer remain visible. */
 @media (max-width: 1050px) {
+    /* Keep login, forgot-password, OTP, and reset cards on one shared width. */
+    .login-screen:not(.recovery-screen) .auth-card.login-panel,
+    .recovery-screen .auth-card.recovery-request,
+    .recovery-screen .auth-card.recovery-sent,
+    .recovery-screen .auth-card.recovery-reset {
+        box-sizing: border-box;
+        margin-inline: auto;
+        max-width: calc(100vw - 32px);
+        min-width: 0;
+        width: min(332px, calc(100vw - 32px));
+    }
+
     .notification-popover {
         left: var(--notification-left, 12px);
         right: auto;
