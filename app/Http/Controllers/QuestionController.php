@@ -34,8 +34,16 @@ class QuestionController extends Controller
             ->when($archived, fn ($query) => $query->whereNotNull('archived_at'), fn ($query) => $query->whereNull('archived_at'))
             ->orderBy('id')
             ->get();
+        $archivedStepKeys = $business->surveySteps()->whereNotNull('archived_at')->pluck('key')->all();
 
-        return view('questions.index', ['questions' => $questions, 'search' => $search, 'archived' => $archived, 'stepLabels' => $stepLabels, 'surveySteps' => $surveySteps, 'nextSortOrder' => (int) $business->questions()->max('sort_order') + 1]);
+        $defaultQuestionStep = $business->surveySteps()
+            ->whereNull('archived_at')
+            ->where('is_published', false)
+            ->whereDoesntHave('questions', fn ($query) => $query->whereNull('archived_at'))
+            ->orderByDesc('id')
+            ->value('key') ?? 'final';
+
+        return view('questions.index', ['questions' => $questions, 'search' => $search, 'archived' => $archived, 'stepLabels' => $stepLabels, 'surveySteps' => $surveySteps, 'archivedStepKeys' => $archivedStepKeys, 'nextSortOrder' => (int) $business->questions()->max('sort_order') + 1, 'defaultQuestionStep' => $defaultQuestionStep]);
     }
 
     public function suggestions(Request $request)
@@ -192,12 +200,13 @@ class QuestionController extends Controller
         $allowedSteps = array_merge(array_keys(SurveyDefinition::STEPS), $request->user()->business->surveySteps()->whereNull('archived_at')->pluck('key')->all(), $question ? [$question->step] : []);
         $data = $request->validate([
             'question' => ['required', 'string', 'max:200'], 'question_type' => ['required', 'in:rating,multiple_choice,comment'],
-            'step' => ['required', Rule::in($allowedSteps)],
+            'step' => ['nullable', Rule::in($allowedSteps)],
             'options' => ['nullable', 'string', 'max:2000'], 'help_text' => ['nullable', 'string', 'max:300'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
         ]);
+        $data['step'] = $data['step'] ?: ($question?->step ?? 'final');
         $data['required'] = $question && $question->is_core ? $question->required : $request->boolean('required');
-        $data['sort_order'] = $data['sort_order'] ?? 100;
+        $data['sort_order'] = $data['sort_order'] ?? ($question?->sort_order ?? ((int) $request->user()->business->questions()->max('sort_order') + 1));
         if ($data['question_type'] === 'multiple_choice') {
             $choices = array_values(array_unique(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', str_replace('\\n', "\n", $data['options'] ?? ''))), fn ($value) => $value !== '')));
             if (count($choices) < 2 || count($choices) > 20 || collect($choices)->contains(fn ($choice) => mb_strlen($choice) > 100)) {

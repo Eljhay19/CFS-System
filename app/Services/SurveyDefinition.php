@@ -44,8 +44,8 @@ class SurveyDefinition
         $final = $labels['final'];
         unset($labels['final']);
         $custom = $business->surveySteps()->orderBy('id')->get();
-        foreach ($custom->whereNull('archived_at')->where('is_published', true) as $step) {
-            $labels[$step->key] = $step->title;
+        foreach ($custom->whereNull('archived_at') as $step) {
+            $labels[$step->key] = $step->title . ($step->is_published ? '' : ' (Draft)');
         }
         $labels['final'] = $final;
         foreach ($custom->whereNotNull('archived_at') as $step) {

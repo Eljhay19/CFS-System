@@ -3918,6 +3918,7 @@
             justify-content: center;
             min-width: 132px;
             padding: 0 14px;
+            white-space: nowrap;
         }
         .thank-home-button svg {
             fill: none;

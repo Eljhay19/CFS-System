@@ -7,6 +7,9 @@
 @endpush
 
 @section('admin_content')
+    @php
+        $initialQuestionStep = old('step', $defaultQuestionStep);
+    @endphp
     <section class="questions-panel">
         <div class="questions-head">
             <div>
@@ -178,8 +181,21 @@
                     <input id="modal_help_text" name="help_text" value="{{ old('help_text') }}" placeholder="Add a short description (optional)...">
                 </div>
 
-                <div class="question-field"><label for="modal_step">Survey Section</label><div class="question-select-shell"><select id="modal_step" name="step" required>@foreach ($stepLabels as $key => $label)<option value="{{ $key }}" {{ old('step', 'final') === $key ? 'selected' : '' }}>{{ $label }}</option>@endforeach</select><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></div></div>
-                <div class="question-field"><label for="modal_sort">Display Order</label><input id="modal_sort" name="sort_order" type="number" min="0" max="9999" value="{{ old('sort_order', $nextSortOrder) }}" data-sort-order></div>
+                <div class="question-field">
+                    <label for="modal_step">Survey Section <span>(optional)</span></label>
+                    <div class="question-select-shell"><select id="modal_step" name="step">
+                        <option value="" {{ $initialQuestionStep === '' ? 'selected' : '' }}>No selection — use Final Questions</option>
+                        @foreach ($stepLabels as $key => $label)
+                            <option value="{{ $key }}" data-archived-step="{{ in_array($key, $archivedStepKeys, true) ? '1' : '0' }}" @disabled(in_array($key, $archivedStepKeys, true)) {{ $initialQuestionStep === $key ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
+                    </select><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></div>
+                    <small class="question-field-hint">Choose a step created with Add Step. Draft steps can receive questions before publishing.</small>
+                </div>
+                <div class="question-field">
+                    <label for="modal_sort">Display Order</label>
+                    <input id="modal_sort" name="sort_order" type="number" min="0" max="9999" value="{{ old('sort_order', $nextSortOrder) }}" data-sort-order>
+                    <small class="question-field-hint">Controls order inside the selected step. Lower numbers appear first; leave blank to use automatic order.</small>
+                </div>
                 <label class="question-toggle-row">
                     <span>Required</span>
                     <input type="checkbox" name="required" value="1" {{ old('required', true) ? 'checked' : '' }}>
@@ -378,13 +394,23 @@
                 helpLabel.innerHTML = `${text} <span>(optional)</span>`;
             }
 
+            function setStepSelection(value, allowedArchivedStep = '') {
+                Array.from(stepSelect.options).forEach((option) => {
+                    if (option.dataset.archivedStep === '1') {
+                        option.disabled = option.value !== allowedArchivedStep;
+                    }
+                });
+                const target = Array.from(stepSelect.options).find((option) => option.value === String(value || ''));
+                stepSelect.value = target && !target.disabled ? target.value : '';
+            }
+
             function prepareAddModal(useCurrentValues = false) {
                 editingCore = false;
                 archiveForm.action = '';
                 archiveButton.hidden = true;
                 coreEditNote.hidden = true;
                 typeSelect.disabled = false; stepSelect.disabled = false; requiredInput.disabled = false;
-                stepSelect.value = @json(old('step', 'final'));
+                setStepSelection(@json($initialQuestionStep));
                 modal.classList.add('is-editing');
                 form.action = storeAction;
                 setMethod('');
@@ -415,7 +441,7 @@
                 archiveButton.hidden = Boolean(question.archived);
                 coreEditNote.hidden = !editingCore;
                 typeSelect.disabled = false; stepSelect.disabled = false; requiredInput.disabled = editingCore;
-                stepSelect.value = question.step || 'final';
+                setStepSelection(question.step || 'final', question.step || '');
                 modal.classList.add('is-editing');
                 form.action = question.action;
                 setMethod('PUT');
