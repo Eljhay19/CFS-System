@@ -60,7 +60,7 @@ class AuthController extends Controller
             if (! in_array($mime, ['image/jpeg', 'image/png'], true)) return;
 
             $business->forceFill([
-                'logo_data' => file_get_contents($path),
+                'logo_data' => base64_encode(file_get_contents($path)),
                 'logo_mime' => $mime,
             ])->save();
         } catch (\Throwable $exception) {

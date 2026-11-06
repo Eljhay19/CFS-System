@@ -34,7 +34,7 @@ class BusinessProfileController extends Controller
         if ($request->hasFile('logo')) {
             $file = $request->file('logo');
             $data['logo'] = null;
-            $data['logo_data'] = $file->getContent();
+            $data['logo_data'] = base64_encode($file->getContent());
             $data['logo_mime'] = $file->getMimeType();
         }
 
@@ -60,7 +60,10 @@ class BusinessProfileController extends Controller
         $business = $request->user()->business;
         abort_unless($business && $business->logo_data && in_array($business->logo_mime, ['image/jpeg', 'image/png'], true), 404);
 
-        return response($business->logo_data, 200, [
+        $imageData = base64_decode($business->logo_data, true);
+        abort_unless($imageData !== false, 404);
+
+        return response($imageData, 200, [
             'Content-Type' => $business->logo_mime,
             'Cache-Control' => 'private, max-age=3600',
             'X-Content-Type-Options' => 'nosniff',
