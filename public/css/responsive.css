@@ -1113,6 +1113,24 @@ input, select, textarea, button { max-width: 100%; }
 .top-search-suggestion small, .top-search-suggestion-empty { color: var(--muted); font-size: 10px; line-height: 1.4; }
 .top-search-suggestion-empty { padding: 10px; }
 .top-search[aria-label="Search questions"]:focus-within { z-index: 1201; }
+
+/* Keep the notification panel above the fixed mobile/tablet header so its
+   heading, unread count, actions, and pointer remain visible. */
+@media (max-width: 1050px) {
+    .notification-popover {
+        left: var(--notification-left, 12px);
+        right: auto;
+        top: var(--notification-top, 80px);
+        transform: none;
+        width: min(304px, calc(100vw - 24px));
+        z-index: 1010;
+    }
+    .notification-popover::before {
+        left: var(--notification-arrow, 20px);
+        right: auto;
+        transform: rotate(45deg);
+    }
+}
 body .terms-close { transition: color 160ms ease; }
 body .terms-close:hover, body .terms-close:focus-visible { transform: none; }
 
