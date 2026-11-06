@@ -4765,7 +4765,7 @@
                 @endif
             </nav>
             <div class="topbar-tools">
-                <form class="top-search" action="{{ $topSearchRoute }}" method="GET" role="search" aria-label="{{ $searchingQuestions ? 'Search questions' : ($searchingMessages ? 'Search messages' : 'Search submitted feedback') }}">
+                <form class="top-search" action="{{ $topSearchRoute }}" method="GET" role="search" aria-label="{{ $searchingQuestions ? 'Search questions' : ($searchingMessages ? 'Search messages' : 'Search submitted feedback') }}" @if ($searchingQuestions) data-suggestions-url="{{ route('questions.suggestions') }}" @endif>
                     @foreach (request()->only(['from', 'to', 'range', 'status', 'period', 'filter', 'unread', 'archived']) as $key => $value)
                         @if (is_scalar($value))<input type="hidden" name="{{ $key }}" value="{{ $value }}">@endif
                     @endforeach

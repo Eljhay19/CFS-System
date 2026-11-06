@@ -38,6 +38,53 @@ class QuestionController extends Controller
         return view('questions.index', ['questions' => $questions, 'search' => $search, 'archived' => $archived, 'stepLabels' => $stepLabels, 'surveySteps' => $surveySteps, 'nextSortOrder' => (int) $business->questions()->max('sort_order') + 1]);
     }
 
+    public function suggestions(Request $request)
+    {
+        $data = $request->validate([
+            'search' => ['required', 'string', 'min:1', 'max:200'],
+            'archived' => ['nullable', 'boolean'],
+        ]);
+        $business = $request->user()->business;
+
+        if (! $business) {
+            return response()->json(['suggestions' => []]);
+        }
+
+        $search = trim($data['search']);
+        if ($search === '') {
+            return response()->json(['suggestions' => []]);
+        }
+        $tokens = preg_split('/\s+/u', $search, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $archived = $request->boolean('archived');
+        $questions = $business->questions()
+            ->when($archived, fn ($query) => $query->whereNotNull('archived_at'), fn ($query) => $query->whereNull('archived_at'))
+            ->where(function ($query) use ($tokens) {
+                foreach ($tokens as $token) {
+                    $pattern = '%' . $token . '%';
+                    $query->orWhere(function ($match) use ($pattern) {
+                        $match->where('question', 'like', $pattern)
+                            ->orWhere('question_type', 'like', $pattern)
+                            ->orWhere('help_text', 'like', $pattern)
+                            ->orWhere('step', 'like', $pattern);
+                    });
+                }
+            })
+            ->orderByRaw("CASE step WHEN 'visit' THEN 1 WHEN 'order' THEN 2 WHEN 'service' THEN 3 WHEN 'food' THEN 4 ELSE 5 END")
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get(['id', 'question', 'question_type', 'step']);
+
+        $stepLabels = app(SurveyDefinition::class)->stepLabels($business);
+        $suggestions = $questions->map(fn ($question) => [
+            'id' => $question->id,
+            'question' => $question->question,
+            'section' => $stepLabels[$question->step] ?? 'Archived Step',
+            'type' => ucwords(str_replace('_', ' ', $question->question_type)),
+        ])->values();
+
+        return response()->json(['suggestions' => $suggestions]);
+    }
+
     public function create()
     {
         return redirect()->route('questions.index');

@@ -35,11 +35,9 @@
         @endif
 
         <div class="questions-list-toolbar">
-            <span class="muted">{{ $questions->count() }} {{ $questions->count() === 1 ? 'question' : 'questions' }}</span>
+            <span class="muted" data-question-results-count>{{ $questions->count() }} {{ $questions->count() === 1 ? 'question' : 'questions' }}</span>
             <span class="questions-list-note">Core questions move to Archived Questions; custom questions can be permanently deleted.</span>
-            @if ($questions->count() > 4)
-                <button class="questions-text-action" type="button" data-question-list-open>View all questions</button>
-            @endif
+            <button class="questions-text-action" type="button" data-question-list-open {{ $questions->count() <= 4 ? 'hidden' : '' }}>View all questions</button>
         </div>
         <div class="questions-table-wrap" tabindex="0" role="region" aria-label="Survey questions">
             <table class="questions-table">
@@ -54,7 +52,7 @@
                 </thead>
                 <tbody>
                     @forelse ($questions as $question)
-                        <tr data-question-row data-is-core="{{ $question->is_core ? '1' : '0' }}">
+                        <tr data-question-row data-question-id="{{ $question->id }}" data-is-core="{{ $question->is_core ? '1' : '0' }}">
                             <td class="questions-col-number" data-label="#">{{ $loop->iteration }}</td>
                             <td class="questions-col-question" data-label="Question">{{ $question->question }}<small class="workflow-table-note">{{ $stepLabels[$question->step] ?? 'Archived Step' }}{{ $question->is_core ? ' / Core' : '' }}</small></td>
                             <td class="questions-col-type" data-label="Type">{{ ucwords(str_replace('_', ' ', $question->question_type)) }}</td>
@@ -107,7 +105,6 @@
                 </tbody>
             </table>
         </div>
-        @if ($questions->count() > 4)
             <dialog class="questions-list-dialog" aria-labelledby="questions-list-title" data-question-list-dialog>
                 <header class="questions-list-dialog-head">
                     <div><h2 id="questions-list-title">All {{ $archived ? 'Archived ' : '' }}Questions</h2><p>Custom questions are shown first. Deleting a core question moves it to Archived Questions and keeps saved feedback; custom questions can be permanently deleted when they have no saved responses.</p></div>
@@ -115,7 +112,6 @@
                 </header>
                 <div class="questions-list-dialog-table" data-question-list-mount></div>
             </dialog>
-        @endif
         <dialog class="question-delete-confirm" aria-labelledby="question-delete-title" aria-describedby="question-delete-message" data-question-delete-dialog>
             <h2 id="question-delete-title">Delete this question?</h2>
             <p id="question-delete-message" data-delete-question-message>Are you sure you want to permanently delete <strong data-delete-question-label>this question</strong>? This cannot be undone.</p>
@@ -477,10 +473,39 @@
                 openModal();
             });
             const questionRows = Array.from(document.querySelectorAll('[data-question-row]'));
+            const resultsCount = document.querySelector('[data-question-results-count]');
+            let liveMatchIds = null;
+            const tableBody = sourceQuestionTable?.querySelector('tbody');
+            const emptySearchRow = document.createElement('tr');
+            emptySearchRow.dataset.liveSearchEmpty = '';
+            emptySearchRow.hidden = true;
+            const emptySearchCell = document.createElement('td');
+            emptySearchCell.colSpan = 5;
+            emptySearchCell.className = 'muted';
+            emptySearchCell.textContent = 'No matching questions.';
+            emptySearchRow.append(emptySearchCell);
+            tableBody?.append(emptySearchRow);
             const fitQuestionRows = () => {
                 const visibleLimit = 7;
-                questionRows.forEach((row, index) => { row.hidden = index >= visibleLimit; });
+                const matchingRows = questionRows.filter((row) => liveMatchIds === null || liveMatchIds.has(String(row.dataset.questionId)));
+                const visibleRows = new Set(matchingRows.slice(0, visibleLimit));
+                questionRows.forEach((row) => {
+                    const matches = liveMatchIds === null || liveMatchIds.has(String(row.dataset.questionId));
+                    row.dataset.liveSearchMatch = matches ? 'true' : 'false';
+                    row.hidden = !visibleRows.has(row);
+                });
+                emptySearchRow.hidden = liveMatchIds === null || matchingRows.length > 0;
+                if (resultsCount) {
+                    const count = matchingRows.length;
+                    resultsCount.textContent = `${count} ${count === 1 ? 'question' : 'questions'}`;
+                }
+                if (questionListOpen) questionListOpen.hidden = matchingRows.length <= 4;
             };
+            document.addEventListener('questions:live-search', (event) => {
+                const suggestions = event.detail?.suggestions;
+                liveMatchIds = suggestions === null ? null : new Set((suggestions || []).map((item) => String(item.id)));
+                fitQuestionRows();
+            });
             fitQuestionRows();
             window.addEventListener('resize', fitQuestionRows, { passive: true });
 
@@ -506,6 +531,8 @@
             questionListOpen?.addEventListener('click', () => {
                 if (!sourceQuestionTable || !questionListDialog || !questionListMount) return;
                 const fullTable = sourceQuestionTable.cloneNode(true);
+                fullTable.querySelector('[data-live-search-empty]')?.remove();
+                fullTable.querySelectorAll('[data-question-row][data-live-search-match="false"]').forEach((row) => row.remove());
                 fullTable.querySelectorAll('tr[hidden]').forEach((row) => row.removeAttribute('hidden'));
                 const tableBody = fullTable.querySelector('tbody');
                 Array.from(tableBody?.querySelectorAll('[data-question-row]') || [])

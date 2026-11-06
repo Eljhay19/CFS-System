@@ -64,6 +64,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/business-profile', [BusinessProfileController::class, 'edit'])->name('business.edit');
     Route::get('/business-profile/logo', [BusinessProfileController::class, 'logo'])->name('business.logo');
     Route::post('/business-profile', [BusinessProfileController::class, 'update'])->name('business.update');
+    Route::get('/questions/suggestions', [QuestionController::class, 'suggestions'])->middleware('throttle:60,1')->name('questions.suggestions');
     Route::resource('/questions', QuestionController::class)->except(['show']);
     Route::post('/questions/{question}/restore', [QuestionController::class, 'restore'])->name('questions.restore');
     Route::delete('/questions/{question}/permanently', [QuestionController::class, 'destroyPermanently'])->name('questions.permanently-destroy');

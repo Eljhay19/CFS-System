@@ -8,7 +8,7 @@
         clear.addEventListener('click', () => { input.value = ''; form.requestSubmit(); });
         input.addEventListener('search', () => { if (!input.value) form.requestSubmit(); });
 
-        if (form.getAttribute('aria-label') !== 'Search questions') return;
+        if (form.getAttribute('aria-label') !== 'Search questions' || !form.dataset.suggestionsUrl) return;
 
         const menu = document.createElement('div');
         menu.className = 'top-search-suggestions';
@@ -64,35 +64,24 @@
             showMessage('Searching questions…');
 
             try {
-                const url = new URL(form.action, window.location.href);
+                const url = new URL(form.dataset.suggestionsUrl, window.location.href);
                 new FormData(form).forEach((value, key) => {
                     if (key !== 'search' && typeof value === 'string') url.searchParams.set(key, value);
                 });
                 url.searchParams.set('search', term);
                 const response = await fetch(url, {
                     credentials: 'same-origin',
-                    headers: { Accept: 'text/html', 'X-Requested-With': 'XMLHttpRequest' },
+                    headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                     signal: controller.signal,
                 });
                 if (!response.ok) throw new Error('Question suggestions could not be loaded.');
-
-                const page = new DOMParser().parseFromString(await response.text(), 'text/html');
-                const matches = Array.from(page.querySelectorAll('[data-question-row]'))
-                    .map(row => {
-                        const questionCell = row.querySelector('[data-label="Question"]');
-                        if (!questionCell) return null;
-                        const titleNode = questionCell.cloneNode(true);
-                        titleNode.querySelectorAll('small').forEach(note => note.remove());
-                        return {
-                            title: titleNode.textContent.trim(),
-                            section: questionCell.querySelector('small')?.textContent.trim() || '',
-                            type: row.querySelector('[data-label="Type"]')?.textContent.trim() || '',
-                        };
-                    })
-                    .filter(item => item?.title)
-                    .slice(0, 7);
+                const payload = await response.json();
+                const matches = (payload.suggestions || []).filter(item => item?.question).slice(0, 8);
 
                 if (input.value.trim() !== term) return;
+                document.dispatchEvent(new CustomEvent('questions:live-search', {
+                    detail: { term, suggestions: payload.suggestions || [] },
+                }));
                 if (!matches.length) {
                     showMessage('No matching questions.');
                     return;
@@ -105,9 +94,9 @@
                     option.id = `${menu.id}-option-${index}`;
                     option.setAttribute('role', 'option');
                     option.setAttribute('aria-selected', 'false');
-                    option.dataset.question = match.title;
+                    option.dataset.question = match.question;
                     const title = document.createElement('strong');
-                    title.textContent = match.title;
+                    title.textContent = match.question;
                     option.append(title);
                     const details = [match.section, match.type].filter(Boolean).join(' · ');
                     if (details) {
@@ -132,7 +121,10 @@
             window.clearTimeout(timer);
             controller?.abort();
             const term = input.value.trim();
-            if (term.length < 2) {
+            if (term.length < 1) {
+                document.dispatchEvent(new CustomEvent('questions:live-search', {
+                    detail: { term: '', suggestions: null },
+                }));
                 closeMenu();
                 return;
             }
