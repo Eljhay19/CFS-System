@@ -61,6 +61,55 @@ class AdminWorkflowTest extends TestCase
         $this->post(route('questions.restore',$question))->assertRedirect();
         $this->assertNull($question->fresh()->archived_at);
         $this->get(route('questions.index'))->assertOk()->assertSee('Favorite drink?');
+        $this->delete(route('questions.permanently-destroy',$question))->assertRedirect();
+        $this->assertDatabaseMissing('questions',['id'=>$question->id]);
+    }
+
+    public function test_permanent_core_question_deletion_keeps_feedback_and_does_not_recreate_question(): void
+    {
+        $feedback = $this->record('Submitted', now()->toDateTimeString(), 'Saved rating history', 8);
+        $question = $this->business->questions()->where('field_key', 'cleanliness')->firstOrFail();
+        $answer = $feedback->answers()->where('question_id', $question->id)->firstOrFail();
+
+        $this->delete(route('questions.permanently-destroy', $question))->assertRedirect();
+
+        $this->assertDatabaseMissing('questions', ['id' => $question->id]);
+        $this->assertDatabaseHas('answers', [
+            'id' => $answer->id,
+            'question_id' => null,
+            'question_text' => $question->question,
+            'question_type' => 'rating',
+            'answer' => '8',
+        ]);
+        $this->get(route('questions.index'))->assertOk();
+        $this->assertDatabaseMissing('questions', ['business_id' => $this->business->id, 'field_key' => 'cleanliness']);
+        $this->assertNotContains('cleanliness', array_column(app(\App\Services\SurveyDefinition::class)->snapshot($this->business), 'key'));
+        $this->assertSame('Saved rating history', $feedback->fresh()->answers->first(fn ($item) => $item->field_key === 'problem_comment')->answer);
+    }
+
+    public function test_archived_step_can_be_restored_and_permanently_deleted_with_its_questions(): void
+    {
+        $step = $this->business->surveySteps()->create(['key' => 'step_testing', 'title' => 'Test Step', 'description' => null, 'is_published' => true]);
+        $question = $this->custom(['question' => 'Step question?', 'step' => $step->key, 'question_type' => 'comment']);
+        $feedback = $this->business->feedback()->create(['status' => 'Submitted', 'submitted_at' => now()]);
+        $answer = $feedback->answers()->create([
+            'question_id' => $question->id, 'question_text' => $question->question,
+            'question_type' => $question->question_type, 'field_key' => $question->field_key, 'answer' => 'Step answer',
+        ]);
+
+        $this->post(route('survey-steps.archive', $step))->assertRedirect();
+        $this->assertNotContains($step->key, array_column(app(\App\Services\SurveyDefinition::class)->snapshot($this->business), 'step'));
+        $this->post(route('survey-steps.archive', $step))->assertRedirect();
+        $this->assertNull($step->fresh()->archived_at);
+        $this->assertFalse($step->fresh()->is_published);
+        $this->post(route('survey-steps.publish', $step))->assertRedirect();
+        $this->assertContains($step->key, array_column(app(\App\Services\SurveyDefinition::class)->snapshot($this->business), 'step'));
+
+        $this->post(route('survey-steps.archive', $step))->assertRedirect();
+        $this->delete(route('survey-steps.destroy', $step))->assertRedirect();
+        $this->assertDatabaseMissing('survey_steps', ['id' => $step->id]);
+        $this->assertDatabaseMissing('questions', ['id' => $question->id]);
+        $this->assertDatabaseHas('answers', ['id' => $answer->id, 'question_id' => null, 'question_text' => 'Step question?', 'answer' => 'Step answer']);
     }
 
     public function test_choices_are_validated_and_core_semantics_cannot_be_changed(): void
@@ -73,7 +122,8 @@ class AdminWorkflowTest extends TestCase
         $this->assertSame('service',$question->step);
         $this->assertTrue($question->required);
         $this->assertSame('Updated cleanliness label',$question->question);
-        $this->delete(route('questions.destroy',$question))->assertSessionHasErrors('question');
+        $this->delete(route('questions.permanently-destroy',$question))->assertRedirect();
+        $this->assertDatabaseMissing('questions', ['id' => $question->id]);
     }
 
     public function test_other_admin_cannot_manage_questions_or_retry_email(): void
@@ -186,6 +236,11 @@ class AdminWorkflowTest extends TestCase
         $this->get(route('dashboard'))->assertOk()->assertViewHas('liveRevision', $stats['revision']);
         $this->get(route('feedback.index'))->assertOk()->assertViewHas('liveRevision', $stats['revision'])
             ->assertViewHas('feedbackOverview', fn ($overview) => $overview['statusCounts']['Needs Action'] === 1);
+        $ratingAnswer = $first->answers()->where('field_key', 'cleanliness')->firstOrFail();
+        $ratingAnswer->update(['answer' => '10']);
+        $updatedRatings = $this->getJson(route('dashboard.stats'))->assertOk()->assertJsonPath('average', 7)->json();
+        $this->assertNotSame($stats['revision'], $updatedRatings['revision']);
+        $stats = $updatedRatings;
         $this->getJson(route('dashboard.notifications'))->assertOk()->assertJsonPath('unread_count', 2)
             ->assertJsonPath('notifications.0.url', route('dashboard.notifications.open', $second))
             ->assertJsonPath('notifications.0.submitted_at', $second->submitted_at->format('M d, Y h:i A'))

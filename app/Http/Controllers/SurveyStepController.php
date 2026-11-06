@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\SurveyStep;
+use App\Models\Question;
 use App\Services\AdminSystemNotifications;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class SurveyStepController extends Controller
@@ -47,6 +49,18 @@ class SurveyStepController extends Controller
         $surveyStep->update(['archived_at' => $surveyStep->archived_at ? null : now(), 'is_published' => false]);
         app(AdminSystemNotifications::class)->record($request->user(), $surveyStep->archived_at ? 'Survey step archived' : 'Survey step restored', $surveyStep->archived_at ? 'A survey step was archived.' : 'A survey step was restored as a draft.');
         return redirect()->route('questions.index')->with('status', 'Step archive status updated. Saved answers and existing drafts are preserved.');
+    }
+
+    public function destroy(Request $request, SurveyStep $surveyStep)
+    {
+        $this->authorizeStep($request, $surveyStep);
+        DB::transaction(function () use ($surveyStep) {
+            $step = SurveyStep::whereKey($surveyStep->id)->lockForUpdate()->firstOrFail();
+            Question::where('business_id', $step->business_id)->where('step', $step->key)->delete();
+            $step->delete();
+        });
+        app(AdminSystemNotifications::class)->record($request->user(), 'Survey step deleted', 'A survey step and its questions were permanently deleted. Existing feedback answers are preserved.');
+        return redirect()->route('questions.index')->with('status', 'Step and its questions permanently deleted. Existing feedback answers are preserved.');
     }
 
     private function authorizeStep(Request $request, SurveyStep $step): void

@@ -11,7 +11,10 @@
         $title = $titles[$step] ?? $steps[$step]['title'];
         $lead = $leads[$step] ?? $steps[$step]['description'];
         $stepKeys = array_keys($steps);
-        $back = $custom ? app(\App\Services\SurveyDefinition::class)->url($stepKeys[$index - 2]) : (isset($backs[$step]) ? route($backs[$step]) : route('home'));
+        $previousStep = $stepKeys[$index - 2] ?? null;
+        $back = ($custom || $step === 'final') && $previousStep
+            ? app(\App\Services\SurveyDefinition::class)->url($previousStep)
+            : (isset($backs[$step]) ? route($backs[$step]) : route('home'));
     @endphp
     <section class="survey-shell {{ $step === 'visit' ? 'visit-survey-shell' : '' }} {{ $kind ? $kind . '-survey-shell' : '' }} {{ $custom ? 'additional-survey-shell' : '' }}">
         @include('feedback.partials.steps', ['activeStep' => $step])

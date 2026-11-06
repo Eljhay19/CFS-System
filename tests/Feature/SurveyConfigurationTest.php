@@ -65,7 +65,7 @@ class SurveyConfigurationTest extends TestCase
         $this->assertCount(5, app(SurveyDefinition::class)->stepSnapshot($this->business));
         $this->post(route('survey-steps.publish', $step))->assertRedirect();
         $this->assertCount(6, app(SurveyDefinition::class)->stepSnapshot($this->business));
-        $this->assertSame(array_keys(SurveyDefinition::STEPS), array_slice(array_keys(app(SurveyDefinition::class)->stepSnapshot($this->business)), 0, 5));
+        $this->assertSame(['visit', 'order', 'service', 'food', $step->key, 'final'], array_keys(app(SurveyDefinition::class)->stepSnapshot($this->business)));
         $this->post(route('survey-steps.archive', $step))->assertRedirect();
         $this->assertCount(5, app(SurveyDefinition::class)->stepSnapshot($this->business));
         $this->post(route('survey-steps.archive', $step))->assertRedirect();
@@ -81,12 +81,14 @@ class SurveyConfigurationTest extends TestCase
         $this->withSession(['survey' => $this->draft()]);
         $this->get(route('feedback.review'))->assertRedirect(route('feedback.additional', $first->key));
         $this->get(route('feedback.additional', $second->key))->assertRedirect(route('feedback.additional', $first->key));
-        $this->get(route('feedback.additional', $first->key))->assertOk()->assertSee('Step 6 of 7');
+        $this->get(route('feedback.additional', $first->key))->assertOk()->assertSee('Step 5 of 7');
         $this->post(route('feedback.additional.save', $first->key), [])->assertSessionHasErrors('extra.' . $comment->id);
         $answer = '=HYPERLINK("test")';
         $this->post(route('feedback.additional.save', $first->key), ['extra' => [$comment->id => $answer]])->assertRedirect(route('feedback.additional', $second->key));
         $this->post(route('feedback.additional.save', $second->key), ['extra' => [$rating->id => 5]])->assertSessionHasErrors('extra_selected.' . $rating->id);
-        $this->post(route('feedback.additional.save', $second->key), ['extra' => [$rating->id => 7], 'extra_selected' => [$rating->id => 1]])->assertRedirect(route('feedback.review'));
+        $this->post(route('feedback.additional.save', $second->key), ['extra' => [$rating->id => 7], 'extra_selected' => [$rating->id => 1]])->assertRedirect(route('feedback.final'));
+        $this->get(route('feedback.final'))->assertOk()->assertSee('Step 7 of 7')->assertSee('Final Questions');
+        $this->post(route('feedback.final.save'), ['order_accurate' => 'Like Up', 'food_satisfied' => 'Like Up', 'problem_today' => 'No'])->assertRedirect(route('feedback.review'));
         $this->get(route('feedback.review'))->assertOk()->assertSee('Additional Comments');
         $this->post(route('feedback.store'))->assertRedirect(route('feedback.thank-you'));
         $feedback = Feedback::firstOrFail();
@@ -109,8 +111,10 @@ class SurveyConfigurationTest extends TestCase
         $this->post(route('survey-steps.archive', $step))->assertRedirect();
         $this->delete(route('questions.destroy', $question))->assertRedirect();
         $this->get(route('feedback.additional', $step->key))->assertOk()->assertSee('Original Step');
-        $this->post(route('feedback.additional.save', $step->key), ['extra' => [$question->id => 'Retained answer']])->assertRedirect(route('feedback.review'));
-        $this->get(route('feedback.continue'))->assertRedirect(route('feedback.additional', $step->key));
+        $this->post(route('feedback.additional.save', $step->key), ['extra' => [$question->id => 'Retained answer']])->assertRedirect(route('feedback.final'));
+        $this->get(route('feedback.final'))->assertOk();
+        $this->post(route('feedback.final.save'), ['order_accurate' => 'Like Up', 'food_satisfied' => 'Like Up', 'problem_today' => 'No'])->assertRedirect(route('feedback.review'));
+        $this->get(route('feedback.continue'))->assertRedirect(route('feedback.final'));
         $this->get(route('feedback.review'))->assertOk();
         $this->post(route('feedback.store'))->assertRedirect();
         $this->assertDatabaseHas('answers', ['question_id' => $question->id, 'question_text' => 'Original Step question', 'answer' => 'Retained answer']);

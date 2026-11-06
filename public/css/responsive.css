@@ -366,6 +366,33 @@ input, select, textarea, button { max-width: 100%; }
 .table-wrap, .feedback-table-wrap, .questions-table-wrap,
 .messages-table-wrap { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
 
+/* Keep the dashboard, feedback details, contact messages, and settings panels
+   the same desktop height as the shared Feedback and Business Profile area. */
+@media (min-width: 761px) {
+    body.admin-screen .admin-main:has(> .dashboard-panel),
+    body.admin-screen .admin-main:has(> .feedback-dashboard),
+    body.admin-screen .admin-main:has(> .business-profile-panel),
+    body.admin-screen .admin-main:has(> .feedback-detail),
+    body.admin-screen .admin-main:has(> .messages-panel),
+    body.admin-screen .admin-main:has(> .settings-panel) {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+    }
+    .admin-main > .dashboard-panel,
+    .admin-main > .feedback-dashboard,
+    .admin-main > .business-profile-panel,
+    .admin-main > .feedback-detail,
+    .admin-main > .messages-panel,
+    .admin-main > .settings-panel {
+        flex: 1 1 auto;
+        height: 100%;
+        min-height: 0;
+        overflow: auto;
+    }
+}
+
 @media (max-width: 1050px) {
     .login-screen .auth-card.login-panel { height: auto; max-height: none; overflow: hidden; width: min(460px, calc(100vw - 32px)); }
     .login-screen .auth-card .login-grid { grid-template-columns: minmax(0, 1fr); min-height: 0; }

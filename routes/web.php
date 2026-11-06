@@ -72,6 +72,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/survey-steps/{surveyStep}', [SurveyStepController::class, 'update'])->name('survey-steps.update');
     Route::post('/survey-steps/{surveyStep}/publish', [SurveyStepController::class, 'publish'])->name('survey-steps.publish');
     Route::post('/survey-steps/{surveyStep}/archive', [SurveyStepController::class, 'archive'])->name('survey-steps.archive');
+    Route::delete('/survey-steps/{surveyStep}', [SurveyStepController::class, 'destroy'])->name('survey-steps.destroy');
     Route::get('/admin-feedback', [FeedbackReviewController::class, 'index'])->name('feedback.index');
     Route::get('/admin-feedback/{feedback}', [FeedbackReviewController::class, 'show'])->name('feedback.detail');
     Route::post('/admin-feedback/{feedback}/action', [FeedbackReviewController::class, 'updateAction'])->name('feedback.action');

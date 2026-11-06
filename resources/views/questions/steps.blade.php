@@ -11,6 +11,7 @@
                         <form method="POST" action="{{ route('survey-steps.publish', $surveyStep) }}">@csrf<button class="button compact-button step-action" type="submit" {{ !$surveyStep->is_published && !$activeCount ? 'disabled' : '' }}>{{ $surveyStep->is_published ? 'Unpublish' : 'Publish' }}</button></form>
                     @endunless
                     <form method="POST" action="{{ route('survey-steps.archive', $surveyStep) }}">@csrf<button class="button compact-button step-action" type="submit">{{ $surveyStep->archived_at ? 'Restore Step' : 'Archive Step' }}</button></form>
+                    <form method="POST" action="{{ route('survey-steps.destroy', $surveyStep) }}" onsubmit="return confirm('Permanently delete this step and its questions? Previously submitted feedback answers will be preserved.')">@csrf @method('DELETE')<button class="button compact-button step-action questions-delete-link" type="submit">Delete Step</button></form>
                 </div>
             </div>
         @endforeach

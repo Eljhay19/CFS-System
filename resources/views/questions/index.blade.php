@@ -36,7 +36,7 @@
 
         <div class="questions-list-toolbar">
             <span class="muted" data-question-results-count>{{ $questions->count() }} {{ $questions->count() === 1 ? 'question' : 'questions' }}</span>
-            <span class="questions-list-note">Core questions move to Archived Questions; custom questions can be permanently deleted.</span>
+            <span class="questions-list-note">Delete permanently removes a question from new surveys. Archive keeps it available to restore. Saved feedback answers remain preserved.</span>
             <button class="questions-text-action" type="button" data-question-list-open {{ $questions->count() <= 4 ? 'hidden' : '' }}>View all questions</button>
         </div>
         <div class="questions-table-wrap" tabindex="0" role="region" aria-label="Survey questions">
@@ -63,16 +63,7 @@
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 20 8-8-4-4-8 8-2 6 6-2Z"></path><path d="m14 6 4 4"></path></svg>
                                         Edit
                                     </button>
-                                    @if ($question->is_core && ! $question->archived_at)
-                                        <form action="{{ route('questions.destroy', $question) }}" method="POST" data-question-delete-form data-question-delete-mode="archive" data-question-id="{{ $question->id }}">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button class="questions-action questions-delete-link" type="submit" aria-label="Remove {{ $question->question }} from the active survey">
-                                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v5M14 11v5"></path></svg>
-                                                Delete
-                                            </button>
-                                        </form>
-                                    @elseif (! $question->is_core)
+                                    @if ($question->archived_at)
                                         <form action="{{ route('questions.permanently-destroy', $question) }}" method="POST" data-question-delete-form data-question-delete-mode="permanent" data-question-id="{{ $question->id }}">
                                             @csrf
                                             @method('DELETE')
@@ -81,18 +72,24 @@
                                                 Delete
                                             </button>
                                         </form>
-                                    @endunless
-                                    @if ($question->archived_at)
-                                    <form action="{{ route('questions.restore', $question) }}" method="POST">@csrf<button class="questions-action questions-edit" type="submit">Restore</button></form>
-                                    @elseif (! $question->is_core)
-                                    <form action="{{ route('questions.destroy', $question) }}" method="POST" onsubmit="return confirm('Archive this question? Existing answers will be preserved.')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button class="questions-action questions-delete" type="submit">
-                                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v5M14 11v5"></path></svg>
-                                            Archive
-                                        </button>
-                                    </form>
+                                        <form action="{{ route('questions.restore', $question) }}" method="POST">@csrf<button class="questions-action questions-edit" type="submit">Restore</button></form>
+                                    @else
+                                        <form action="{{ route('questions.permanently-destroy', $question) }}" method="POST" data-question-delete-form data-question-delete-mode="permanent" data-question-id="{{ $question->id }}">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="questions-action questions-delete-link" type="submit" aria-label="Permanently delete {{ $question->question }}">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v5M14 11v5"></path></svg>
+                                                Delete
+                                            </button>
+                                        </form>
+                                        <form action="{{ route('questions.destroy', $question) }}" method="POST" onsubmit="return confirm('Archive this question? Existing answers will be preserved.')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="questions-action questions-delete" type="submit">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v5M14 11v5"></path></svg>
+                                                Archive
+                                            </button>
+                                        </form>
                                     @endif
                                 </div>
                             </td>
@@ -107,7 +104,7 @@
         </div>
             <dialog class="questions-list-dialog" aria-labelledby="questions-list-title" data-question-list-dialog>
                 <header class="questions-list-dialog-head">
-                    <div><h2 id="questions-list-title">All {{ $archived ? 'Archived ' : '' }}Questions</h2><p>Custom questions are shown first. Deleting a core question moves it to Archived Questions and keeps saved feedback; custom questions can be permanently deleted when they have no saved responses.</p></div>
+                    <div><h2 id="questions-list-title">All {{ $archived ? 'Archived ' : '' }}Questions</h2><p>Deleting permanently removes a question from future surveys while keeping saved feedback. Archive a question to restore it later.</p></div>
                     <button class="terms-close" type="button" aria-label="Close all questions" data-question-list-close>&times;</button>
                 </header>
                 <div class="questions-list-dialog-table" data-question-list-mount></div>
@@ -549,14 +546,9 @@
                 pendingDeleteForm = deleteForm;
                 const question = questionsData[deleteForm.dataset.questionId];
                 deleteQuestionLabel.textContent = question?.question || 'this question';
-                const coreRemoval = deleteForm.dataset.questionDeleteMode === 'archive';
-                deleteQuestionMessage.firstChild.textContent = coreRemoval
-                    ? 'Are you sure you want to remove '
-                    : 'Are you sure you want to permanently delete ';
-                deleteQuestionMessage.lastChild.textContent = coreRemoval
-                    ? '? It will move to Archived Questions and existing feedback will be kept.'
-                    : '? This cannot be undone and is allowed only if there are no saved responses.';
-                deleteYesButton.textContent = coreRemoval ? 'Yes, remove' : 'Yes, delete';
+                deleteQuestionMessage.firstChild.textContent = 'Are you sure you want to permanently delete ';
+                deleteQuestionMessage.lastChild.textContent = '? It will disappear from future surveys. Previously submitted feedback answers will be kept.';
+                deleteYesButton.textContent = 'Yes, delete';
                 deleteDialog.showModal();
                 deleteNoButton.focus();
             });

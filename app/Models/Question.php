@@ -27,14 +27,6 @@ class Question extends Model
         'is_core' => 'boolean', 'archived_at' => 'datetime',
     ];
 
-    protected static function booted()
-    {
-        static::deleting(function ($question) {
-            if (! $question->is_core) $question->update(['archived_at' => now()]);
-            return false;
-        });
-    }
-
     public function answers()
     {
         return $this->hasMany(Answer::class);

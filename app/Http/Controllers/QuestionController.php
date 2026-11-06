@@ -109,6 +109,12 @@ class QuestionController extends Controller
     {
         $this->authorizeQuestion($question);
         $data = $this->validated($request, $question);
+        if ($question->is_core) {
+            $data['question_type'] = $question->question_type;
+            $data['options'] = $question->options;
+            $data['step'] = $question->step;
+            $data['required'] = $question->required;
+        }
         $oldStep = $question->step;
         $question->fill($data);
         $changed = $question->isDirty();
@@ -142,27 +148,21 @@ class QuestionController extends Controller
     public function destroyPermanently(Question $question)
     {
         $this->authorizeQuestion($question);
-        if ($question->is_core) {
-            return back()->withErrors(['question' => 'Core survey questions cannot be deleted.']);
-        }
-
         $deletedStep = $question->step;
-        $wasDeleted = DB::transaction(function () use ($question, $deletedStep) {
+        DB::transaction(function () use ($question, $deletedStep) {
             $lockedQuestion = Question::whereKey($question->id)->lockForUpdate()->firstOrFail();
-            if ($lockedQuestion->answers()->exists()) return false;
-
-            // Use the query builder to bypass Question's archive-only deleting hook.
+            if ($lockedQuestion->is_core) {
+                DB::table('deleted_survey_questions')->updateOrInsert(
+                    ['business_id' => $lockedQuestion->business_id, 'field_key' => $lockedQuestion->field_key],
+                    ['created_at' => now(), 'updated_at' => now()]
+                );
+            }
             DB::table('questions')->where('id', $lockedQuestion->id)->delete();
             $this->unpublishEmptyStep($lockedQuestion->business_id, $deletedStep);
-            return true;
         });
 
-        if (! $wasDeleted) {
-            return back()->withErrors(['question' => 'This question already has responses. Archive it to keep its feedback history.']);
-        }
-
-        app(AdminSystemNotifications::class)->record(auth()->user(), 'Survey question deleted', 'A survey question with no responses was permanently deleted.');
-        return redirect()->route('questions.index')->with('status', 'Question permanently deleted.');
+        app(AdminSystemNotifications::class)->record(auth()->user(), 'Survey question deleted', 'A survey question was permanently deleted. Existing feedback answers are preserved.');
+        return redirect()->route('questions.index')->with('status', 'Question permanently deleted. Existing feedback answers are preserved.');
     }
 
     private function authorizeQuestion(Question $question): void
@@ -179,12 +179,12 @@ class QuestionController extends Controller
 
         if ($hasActiveQuestions) return;
 
-        // Keep the step row for historical answer references, but remove an empty custom step
-        // from the active survey setup. Archived steps remain restorable in the Archived tab.
+        // Keep an empty custom step available as a draft; removing its last question
+        // must not silently move the step to the archive.
         SurveyStep::where('business_id', $businessId)
             ->where('key', $key)
             ->whereNull('archived_at')
-            ->update(['is_published' => false, 'archived_at' => now()]);
+            ->update(['is_published' => false]);
     }
 
     private function validated(Request $request, ?Question $question = null): array

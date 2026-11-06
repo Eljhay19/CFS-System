@@ -6,6 +6,7 @@ use App\Models\Business;
 use App\Models\Question;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 class SurveyDefinition
@@ -22,10 +23,13 @@ class SurveyDefinition
     public function stepSnapshot(Business $business): array
     {
         $steps = $this->defaultSteps();
+        $final = $steps['final'];
+        unset($steps['final']);
         $activeQuestionSteps = $business->questions()->whereNull('archived_at')->select('step');
         foreach ($business->surveySteps()->whereNull('archived_at')->where('is_published', true)->whereIn('key', $activeQuestionSteps)->orderBy('id')->get() as $step) {
             $steps[$step->key] = ['title' => $step->title, 'description' => $step->description ?: 'Additional feedback'];
         }
+        $steps['final'] = $final;
         return $steps;
     }
 
@@ -36,7 +40,18 @@ class SurveyDefinition
 
     public function stepLabels(Business $business): array
     {
-        return self::STEPS + $business->surveySteps()->orderBy('id')->get()->mapWithKeys(fn ($step) => [$step->key => $step->title . ($step->archived_at ? ' (Archived)' : '')])->all();
+        $labels = self::STEPS;
+        $final = $labels['final'];
+        unset($labels['final']);
+        $custom = $business->surveySteps()->orderBy('id')->get();
+        foreach ($custom->whereNull('archived_at')->where('is_published', true) as $step) {
+            $labels[$step->key] = $step->title;
+        }
+        $labels['final'] = $final;
+        foreach ($custom->whereNotNull('archived_at') as $step) {
+            $labels[$step->key] = $step->title . ' (Archived)';
+        }
+        return $labels;
     }
 
     public function url(string $step): string
@@ -74,9 +89,13 @@ class SurveyDefinition
             'order_details' => ['Order details'], 'problem_comment' => ['Problem or comment details'],
             'cleanliness' => ['Store cleanliness rating'], 'speed_of_service' => ['Speed of service rating'], 'staff' => ['Staff rating'],
         ];
+        $permanentlyDeletedCoreKeys = Schema::hasTable('deleted_survey_questions')
+            ? DB::table('deleted_survey_questions')->where('business_id', $business->id)->pluck('field_key')->all()
+            : [];
         $sort = 0;
         foreach ($this->core() as $key => $definition) {
             $sort++;
+            if (in_array($key, $permanentlyDeletedCoreKeys, true)) continue;
             $query = $business->questions()->where('field_key', $key);
             if ($query->exists()) continue;
             $matches = $business->questions()->whereNull('field_key')->whereIn('question', array_merge([$definition[1]], $aliases[$key] ?? []))->orderBy('id')->get();

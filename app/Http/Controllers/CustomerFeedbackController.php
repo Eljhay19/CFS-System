@@ -221,23 +221,25 @@ class CustomerFeedbackController extends Controller
         $this->normalizeCoreRequest($request, 'food');
         $rules = array_merge($this->definition->coreRules('food'), $this->definition->extraRules('food'));
         $data = $this->validateSurveyStep($request, 'food', $rules);
-        return $this->saveStep('food', 'food_rating', $data, 'feedback.final');
+        $response = $this->saveStep('food', 'food_rating', $data, 'feedback.final');
+        $next = array_keys(array_diff_key($this->definition->steps(), SurveyDefinition::STEPS))[0] ?? null;
+        return $next ? redirect()->to($this->definition->url($next)) : $response;
     }
 
     public function finalStep()
     {
         $this->ensureStep('food_rating');
+        $this->ensureAdditional();
         return $this->renderStep('final', 'feedback.final');
     }
 
     public function saveFinal(Request $request)
     {
         $this->ensureStep('food_rating');
+        $this->ensureAdditional();
         $this->normalizeCoreRequest($request, 'final');
         $data = $this->validateSurveyStep($request, 'final', array_merge($this->definition->coreRules('final'), $this->definition->extraRules('final')));
-        $response = $this->saveStep('final', 'final', $data, 'feedback.review');
-        $next = array_keys(array_diff_key($this->definition->steps(), SurveyDefinition::STEPS))[0] ?? null;
-        return $next ? redirect()->to($this->definition->url($next)) : $response;
+        return $this->saveStep('final', 'final', $data, 'feedback.review');
     }
 
     public function additional(string $stepKey)
@@ -264,9 +266,9 @@ class CustomerFeedbackController extends Controller
         return $next ? redirect()->to($this->definition->url($next)) : redirect()->route('feedback.review');
     }
 
-    private function ensureAdditional(?string $target = null): void
+    private function ensureAdditional(?string $target = null, bool $requireFinal = false): void
     {
-        $this->ensureStep('final');
+        $this->ensureStep($requireFinal ? 'final' : 'food_rating');
         $custom = array_diff_key($this->definition->steps(), SurveyDefinition::STEPS);
         if ($target !== null) abort_unless(isset($custom[$target]), 404);
         foreach ($custom as $key => $step) {
@@ -378,7 +380,7 @@ class CustomerFeedbackController extends Controller
 
     public function review()
     {
-        $this->ensureAdditional();
+        $this->ensureAdditional(null, true);
         session()->put('survey.current_route', 'feedback.review');
         session()->put('survey.reviewed', $this->fingerprint());
         return view('feedback.review', ['questions' => session('survey.questions'), 'definition' => $this->definition, 'steps' => $this->definition->steps()]);
@@ -394,7 +396,7 @@ class CustomerFeedbackController extends Controller
     public function store(Request $request, FeedbackNotifications $notifications)
     {
         if (session('feedback.completed') && ! session('survey.agreed')) return redirect()->route('feedback.thank-you');
-        $this->ensureAdditional();
+        $this->ensureAdditional(null, true);
         if (! hash_equals($this->fingerprint(), (string) session('survey.reviewed'))) {
             return redirect()->route('feedback.review')->withInput()->withErrors(['review' => 'Please review your answers before submitting.']);
         }
