@@ -930,6 +930,21 @@ input, select, textarea, button { max-width: 100%; }
         min-height: 36px;
     }
 }
+/* The Manage Questions workspace keeps its existing height. Show only rows
+   that fit inside it instead of adding a scrollbar to the panel. */
+@media (min-width: 761px) {
+    body.admin-screen .admin-workspace > .admin-main:has(.questions-panel) {
+        overflow: hidden;
+    }
+    body.admin-screen .questions-panel {
+        overflow: hidden;
+    }
+}
+@media (max-width: 760px) {
+    body.admin-screen .questions-panel {
+        overflow: hidden;
+    }
+}
 body .terms-close { transition: color 160ms ease; }
 body .terms-close:hover, body .terms-close:focus-visible { transform: none; }
 

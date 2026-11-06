@@ -229,7 +229,6 @@
             const questionListClose = document.querySelector('[data-question-list-close]');
             const questionListMount = document.querySelector('[data-question-list-mount]');
             const sourceQuestionTable = document.querySelector('.questions-table-wrap .questions-table');
-            const questionTableWrap = document.querySelector('.questions-table-wrap');
             const deleteDialog = document.querySelector('[data-question-delete-dialog]');
             const deleteQuestionLabel = document.querySelector('[data-delete-question-label]');
             const deleteQuestionMessage = document.querySelector('[data-delete-question-message]');
@@ -473,37 +472,12 @@
                 openModal();
             });
             const questionRows = Array.from(document.querySelectorAll('[data-question-row]'));
-            let questionRowsFitFrame = 0;
             const fitQuestionRows = () => {
-                cancelAnimationFrame(questionRowsFitFrame);
-                questionRowsFitFrame = requestAnimationFrame(() => {
-                    if (window.matchMedia('(max-width: 760px)').matches || !questionTableWrap) {
-                        questionRows.forEach((row, index) => { row.hidden = index >= 4; });
-                        return;
-                    }
-
-                    questionRows.forEach((row) => { row.hidden = false; });
-                    const tableHeader = sourceQuestionTable?.querySelector('thead');
-                    const availableHeight = questionTableWrap.clientHeight - (tableHeader?.getBoundingClientRect().height || 0);
-                    let usedHeight = 0;
-                    let visibleRows = 0;
-
-                    questionRows.forEach((row) => {
-                        const rowHeight = row.getBoundingClientRect().height;
-                        const fits = usedHeight + rowHeight <= availableHeight + 1 || visibleRows === 0;
-                        row.hidden = !fits;
-                        if (fits) {
-                            usedHeight += rowHeight;
-                            visibleRows += 1;
-                        }
-                    });
-                });
+                const visibleLimit = window.matchMedia('(max-width: 760px)').matches ? 4 : 7;
+                questionRows.forEach((row, index) => { row.hidden = index >= visibleLimit; });
             };
             fitQuestionRows();
             window.addEventListener('resize', fitQuestionRows, { passive: true });
-            if (window.ResizeObserver && questionTableWrap) {
-                new ResizeObserver(fitQuestionRows).observe(questionTableWrap);
-            }
             questionListOpen?.addEventListener('click', () => {
                 if (!sourceQuestionTable || !questionListDialog || !questionListMount) return;
                 const fullTable = sourceQuestionTable.cloneNode(true);
