@@ -17,7 +17,11 @@
     const positionPopover = () => {
         const bounds = trigger.getBoundingClientRect();
         const width = Math.min(304, innerWidth - 24);
-        const left = Math.max(12, Math.min(innerWidth - width - 12, bounds.right - width + 10));
+        const compact = window.matchMedia('(max-width: 1050px)').matches;
+        const preferredLeft = compact
+            ? bounds.left + bounds.width / 2 - width / 2
+            : bounds.right - width + 10;
+        const left = Math.max(12, Math.min(innerWidth - width - 12, preferredLeft));
         popover.style.setProperty('--notification-left', `${left}px`);
         popover.style.setProperty('--notification-top', `${Math.max(12, Math.min(bounds.bottom + 8, innerHeight - 160))}px`);
         popover.style.setProperty('--notification-arrow', `${Math.max(14, Math.min(width - 24, bounds.x + bounds.width / 2 - left - 5))}px`);

@@ -4849,7 +4849,7 @@
         </div>
     </footer>
     @auth
-        <script src="{{ asset('js/admin-notifications.js') }}?v=20261028-notification-read-flow" defer></script>
+        <script src="{{ asset('js/admin-notifications.js') }}?v=20261106-notification-panel-alignment" defer></script>
     @endauth
     <script src="{{ asset('js/admin-live.js') }}?v={{ filemtime(public_path('js/admin-live.js')) }}" defer></script>
     <script src="{{ asset('js/flash-toast.js') }}?v={{ filemtime(public_path('js/flash-toast.js')) }}" defer></script>
